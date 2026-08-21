@@ -5,10 +5,12 @@ import { Card, colors, formatCOP, SoftButton } from "@/components/nexo-ui";
 import { ScreenContainer } from "@/components/screen-container";
 import { haptic } from "@/lib/haptics";
 import { useNexo } from "@/lib/pos-store";
+import { useBusiness } from "@/lib/business-store";
 import type { Product } from "@/shared/pos-types";
 
 export default function InventoryScreen() {
   const { products, toggleCatalog } = useNexo();
+  const { profile, configuration } = useBusiness();
   const alerts = products.filter((product) => product.stock <= product.minStock).length;
   const renderProduct = ({ item }: { item: Product }) => {
     const atMinimum = item.stock <= item.minStock;
@@ -18,7 +20,7 @@ export default function InventoryScreen() {
       <Pressable onPress={() => { haptic.medium(); toggleCatalog(item.id); }} style={({ pressed }) => [styles.catalogToggle, item.showInCatalog && styles.catalogToggleOn, pressed && styles.pressed]}><MaterialIcons name={item.showInCatalog ? "visibility" : "visibility-off"} size={17} color={item.showInCatalog ? colors.white : colors.muted} /></Pressable>
     </Card>;
   };
-  return <ScreenContainer containerClassName="bg-[#F6F3EE]" className="px-5"><FlatList data={products} renderItem={renderProduct} keyExtractor={(item) => item.id} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} ListHeaderComponent={<><View style={styles.header}><View><Text style={styles.eyebrow}>CATÁLOGO Y EXISTENCIAS</Text><Text style={styles.title}>Inventario</Text></View><Pressable onPress={() => undefined} style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}><MaterialIcons name="add" size={22} color={colors.white} /></Pressable></View><View style={styles.notice}><MaterialIcons name={alerts ? "warning-amber" : "verified"} size={19} color={alerts ? colors.gold : colors.green} /><Text style={styles.noticeText}>{alerts ? `${alerts} productos están en stock mínimo` : "Todos los productos están por encima del mínimo"}</Text></View><View style={styles.filters}><SoftButton label="Todos" icon="filter-list" onPress={() => undefined} /><SoftButton label="Bajo stock" icon="warning-amber" onPress={() => undefined} /></View><Text style={styles.listHeading}>Productos activos</Text></>} /></ScreenContainer>;
+  return <ScreenContainer containerClassName="bg-[#F6F3EE]" className="px-5"><FlatList data={products} renderItem={renderProduct} keyExtractor={(item) => item.id} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} ListHeaderComponent={<><View style={styles.header}><View><Text style={styles.eyebrow}>{profile.shortLabel.toUpperCase()} · EXISTENCIAS</Text><Text style={styles.title}>Inventario</Text></View><Pressable onPress={() => undefined} style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}><MaterialIcons name="add" size={22} color={colors.white} /></Pressable></View><View style={styles.notice}><MaterialIcons name={alerts ? "warning-amber" : configuration.features.weightedProducts ? "scale" : "verified"} size={19} color={alerts ? colors.gold : colors.green} /><Text style={styles.noticeText}>{alerts ? `${alerts} productos están en stock mínimo` : configuration.features.weightedProducts ? "El perfil permite productos por peso y existencias por presentación" : "Todos los productos están por encima del mínimo"}</Text></View><View style={styles.filters}><SoftButton label="Todos" icon="filter-list" onPress={() => undefined} /><SoftButton label="Bajo stock" icon="warning-amber" onPress={() => undefined} /></View><Text style={styles.listHeading}>{configuration.features.barcode ? "Productos con control de código" : "Productos activos"}</Text></>} /></ScreenContainer>;
 }
 
 const styles = StyleSheet.create({

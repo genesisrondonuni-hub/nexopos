@@ -6,17 +6,18 @@ import { Card, colors, formatCOP, PrimaryButton, SoftButton } from "@/components
 import { ScreenContainer } from "@/components/screen-container";
 import { haptic } from "@/lib/haptics";
 import { useNexo } from "@/lib/pos-store";
+import { useBusiness } from "@/lib/business-store";
 import type { Product } from "@/shared/pos-types";
-
-const categories = ["Todos", "Entradas", "Platos", "Bebidas", "Postres"];
 
 export default function PosScreen() {
   const { products, cart, addToCart, addFreeSale } = useNexo();
+  const { profile, configuration } = useBusiness();
+  const categories = ["Todos", ...configuration.suggestedCategories];
   const total = cart.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
   const renderProduct = ({ item }: { item: Product }) => (
     <Pressable onPress={() => { haptic.light(); addToCart(item); }} style={({ pressed }) => [styles.product, pressed && styles.productPressed]}>
-      <View style={[styles.productImage, { backgroundColor: item.category === "Bebidas" ? "#DFEFFF" : item.category === "Postres" ? "#FDE9E4" : colors.mint }]}><MaterialIcons name={item.category === "Bebidas" ? "local-drink" : item.category === "Postres" ? "cake" : "restaurant"} size={24} color={item.category === "Postres" ? colors.coral : colors.green} /></View>
+      <View style={[styles.productImage, { backgroundColor: item.category === "Bebidas" ? "#DFEFFF" : item.category === "Postres" ? "#FDE9E4" : colors.mint }]}><MaterialIcons name={item.category === "Bebidas" ? "local-drink" : item.category === "Postres" ? "cake" : configuration.features.recipes ? "restaurant" : "local-grocery-store"} size={24} color={item.category === "Postres" ? colors.coral : colors.green} /></View>
       <Text numberOfLines={2} style={styles.productName}>{item.name}</Text>
       <View style={styles.productFooter}><Text style={styles.productPrice}>{formatCOP(item.price)}</Text><Text style={[styles.stock, item.stock <= item.minStock && styles.lowStock]}>{item.stock} disp.</Text></View>
     </Pressable>
@@ -34,8 +35,8 @@ export default function PosScreen() {
         contentContainerStyle={styles.content}
         ListHeaderComponent={
           <>
-            <View style={styles.header}><View><Text style={styles.eyebrow}>PUNTO DE VENTA</Text><Text style={styles.title}>Nueva venta</Text></View><Pressable onPress={() => { haptic.medium(); addFreeSale(); }} style={({ pressed }) => [styles.iconButton, pressed && styles.productPressed]}><MaterialIcons name="add" size={22} color={colors.green} /></Pressable></View>
-            <Pressable onPress={() => undefined} style={({ pressed }) => [styles.search, pressed && styles.productPressed]}><MaterialIcons name="search" size={21} color={colors.muted} /><Text style={styles.searchText}>Buscar producto o código</Text><MaterialIcons name="qr-code-scanner" size={20} color={colors.green} /></Pressable>
+            <View style={styles.header}><View><Text style={styles.eyebrow}>{profile.shortLabel.toUpperCase()} · PUNTO DE VENTA</Text><Text style={styles.title}>Nueva venta</Text></View><Pressable onPress={() => { haptic.medium(); addFreeSale(); }} style={({ pressed }) => [styles.iconButton, pressed && styles.productPressed]}><MaterialIcons name="add" size={22} color={colors.green} /></Pressable></View>
+            <Pressable onPress={() => undefined} style={({ pressed }) => [styles.search, pressed && styles.productPressed]}><MaterialIcons name="search" size={21} color={colors.muted} /><Text style={styles.searchText}>{configuration.features.barcode ? "Buscar producto o código" : "Buscar producto o servicio"}</Text>{configuration.features.barcode ? <MaterialIcons name="qr-code-scanner" size={20} color={colors.green} /> : <MaterialIcons name="tune" size={20} color={colors.green} />}</Pressable>
             <View style={styles.categoryRow}><View style={styles.categoryActive}><Text style={styles.categoryActiveText}>{categories[0]}</Text></View><View style={styles.category}><Text style={styles.categoryText}>{categories[1]}</Text></View><View style={styles.category}><Text style={styles.categoryText}>{categories[2]}</Text></View><View style={styles.category}><Text style={styles.categoryText}>{categories[3]}</Text></View></View>
             <Card style={styles.cartPreview}>
               <View style={styles.cartTop}><View style={styles.cartCount}><MaterialIcons name="shopping-bag" size={17} color={colors.green} /><Text style={styles.cartCountText}>{cart.length ? `${cart.length} productos en la cuenta` : "La cuenta está vacía"}</Text></View><Text style={styles.cartTotal}>{formatCOP(total)}</Text></View>

@@ -34,6 +34,21 @@ El flujo administrativo para WhatsApp parte de **Más opciones**. La persona adm
 
 El CRM se organiza en un pipeline configurable que inicia en *Nuevo lead* y continúa con las etapas que el administrador defina. Cada oportunidad conserva el cliente, origen, valor estimado, último contacto y estado de entrega. Desde la configuración se pueden renombrar las etapas, activar o desactivar mensajes automáticos por evento y definir si el delivery está activo, su tarifa base, el umbral de envío gratis y las zonas cubiertas. Los secretos de Meta se mantienen fuera de la pantalla móvil; el administrador configura únicamente parámetros operativos no sensibles.
 
+## Perfiles multi-negocio
+
+NexoPOS ofrece perfiles iniciales para que cada negocio active la terminología y los módulos que necesita, sin perder la posibilidad de personalizar categorías, catálogo y reglas comerciales. El perfil no elimina información existente: solo ajusta los valores por defecto y las ayudas operativas de la interfaz.
+
+| Perfil | Orientación operativa | Módulos y ajustes iniciales |
+|---|---|---|
+| Restaurante | Atención en mesa, recetas y delivery | Recetas, mesas, categorías de menú, propinas y delivery habilitados |
+| Comida rápida | Venta ágil de preparación corta | Pedidos rápidos, combos, mostrador y delivery habilitados |
+| Supermercado | Venta de productos empacados y alto volumen | Lector de códigos, categorías de consumo, stock mínimo y catálogo habilitados |
+| Abasto | Venta por unidad, peso o volumen | Control de existencias, precios por presentación, cuentas por cobrar y delivery opcional |
+| Bodega | Surtido y distribución de inventario | Inventario ampliado, clientes comerciales, precios mayoristas y catálogo opcional |
+| Licorería | Venta de bebidas y entrega controlada | Catálogo de bebidas, validación operativa de edad, delivery y horarios configurables |
+
+El flujo administrativo se inicia desde **Más opciones → Perfil de negocio**. La persona administradora puede escoger un perfil, cambiar el nombre visible del negocio, modificar sus categorías sugeridas y activar o desactivar delivery, recetas, mesa, códigos de barras y precios mayoristas. El perfil activo se refleja en las etiquetas y ayudas del POS, inventario y catálogo público.
+
 ## Paleta y estilo visual
 
 | Elemento | Color | Uso |

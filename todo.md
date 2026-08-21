@@ -25,3 +25,8 @@
 - [x] Permitir que el administrador configure etapas, reglas de seguimiento, plantillas y preferencias de delivery del CRM.
 - [ ] Activar la conexión oficial de Meta WhatsApp Cloud API cuando el administrador proporcione las credenciales.
 - [x] Preparar el adaptador de plantillas y estados de Meta WhatsApp sin activar credenciales.
+- [x] Definir perfiles multi-negocio para restaurante, comida rápida, supermercado, abasto, bodega y licorería.
+- [x] Diseñar la configuración de módulos, inventario y catálogo según el perfil de negocio.
+- [x] Implementar la selección y edición administrativa del perfil de negocio.
+- [x] Adaptar la interfaz de POS, inventario y catálogo al perfil activo.
+- [x] Validar los perfiles multi-negocio y su persistencia local.
