@@ -1,7 +1,14 @@
 import type { Order } from "@/shared/pos-types";
 
-// Sustituir por el número del negocio antes de compartir el catálogo con clientes.
-export const SHOP_WHATSAPP_NUMBER = "573005550183";
+export const DEFAULT_SHOP_WHATSAPP_NUMBER = "573005550183";
+
+export function normalizeWhatsAppNumber(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+export function isValidWhatsAppNumber(value: string) {
+  return /^\d{8,15}$/.test(normalizeWhatsAppNumber(value));
+}
 
 function money(value: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value);
@@ -25,7 +32,7 @@ export function buildWhatsAppMessage(order: Order) {
   ].join("\n");
 }
 
-export function buildWhatsAppOrderUrl(order: Order, recipient = SHOP_WHATSAPP_NUMBER) {
-  const normalizedRecipient = recipient.replace(/\D/g, "");
+export function buildWhatsAppOrderUrl(order: Order, recipient = DEFAULT_SHOP_WHATSAPP_NUMBER) {
+  const normalizedRecipient = normalizeWhatsAppNumber(recipient);
   return `https://wa.me/${normalizedRecipient}?text=${encodeURIComponent(buildWhatsAppMessage(order))}`;
 }

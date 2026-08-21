@@ -13,3 +13,6 @@
 - [x] Implementar el catálogo público con productos visibles y gestión local de carrito.
 - [x] Implementar el formulario de cliente y la generación de pedidos para WhatsApp.
 - [x] Validar el catálogo y el formato de mensaje de pedido de forma determinista.
+- [x] Definir la configuración persistente y la validación del número de WhatsApp del negocio.
+- [x] Implementar la pantalla administrativa para editar y guardar el número de WhatsApp.
+- [x] Conectar el envío del catálogo con el número configurable y comprobar su formato.

@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
+import { DEFAULT_SHOP_WHATSAPP_NUMBER, isValidWhatsAppNumber, normalizeWhatsAppNumber } from "@/lib/whatsapp";
 import type { CartItem, DailySummary, Order, OrderStatus, PaymentSplit, Product } from "@/shared/pos-types";
 
 const starterProducts: Product[] = [
@@ -73,11 +74,16 @@ type PublicOrderInput = {
   deliveryAddress?: string;
 };
 
+export type BusinessSettings = {
+  whatsappNumber: string;
+};
+
 type NexoContextValue = {
   products: Product[];
   orders: Order[];
   cart: CartItem[];
   catalogCart: CartItem[];
+  businessSettings: BusinessSettings;
   summary: DailySummary;
   addToCart: (product: Product) => void;
   addFreeSale: () => void;
@@ -87,6 +93,7 @@ type NexoContextValue = {
   addToCatalogCart: (product: Product) => void;
   setCatalogQuantity: (itemId: string, quantity: number) => void;
   createPublicOrder: (input: PublicOrderInput) => Order | null;
+  updateWhatsAppNumber: (value: string) => boolean;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   toggleCatalog: (productId: string) => void;
   hydrated: boolean;
@@ -99,6 +106,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<Order[]>(starterOrders);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [catalogCart, setCatalogCart] = useState<CartItem[]>([]);
+  const [businessSettings, setBusinessSettings] = useState<BusinessSettings>({ whatsappNumber: DEFAULT_SHOP_WHATSAPP_NUMBER });
   const [summary, setSummary] = useState<DailySummary>({ sales: 1284400, expenses: 342800, profit: 941600, orders: 48 });
   const [hydrated, setHydrated] = useState(false);
 
@@ -107,10 +115,13 @@ export function NexoProvider({ children }: { children: ReactNode }) {
       try {
         const saved = await AsyncStorage.getItem(STORAGE_KEY);
         if (!saved) return;
-        const state = JSON.parse(saved) as { products?: Product[]; orders?: Order[]; summary?: DailySummary };
+        const state = JSON.parse(saved) as { products?: Product[]; orders?: Order[]; summary?: DailySummary; businessSettings?: BusinessSettings };
         if (state.products) setProducts(state.products);
         if (state.orders) setOrders(state.orders);
         if (state.summary) setSummary(state.summary);
+        if (state.businessSettings && isValidWhatsAppNumber(state.businessSettings.whatsappNumber)) {
+          setBusinessSettings({ whatsappNumber: normalizeWhatsAppNumber(state.businessSettings.whatsappNumber) });
+        }
       } catch {
         // The starter data remains available when local data cannot be restored.
       } finally {
@@ -122,8 +133,8 @@ export function NexoProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ products, orders, summary }));
-  }, [hydrated, products, orders, summary]);
+    void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ products, orders, summary, businessSettings }));
+  }, [hydrated, products, orders, summary, businessSettings]);
 
   const addToCart = useCallback((product: Product) => {
     if (product.stock <= 0) return;
@@ -209,6 +220,12 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     return order;
   }, [catalogCart, orders.length]);
 
+  const updateWhatsAppNumber = useCallback((value: string) => {
+    if (!isValidWhatsAppNumber(value)) return false;
+    setBusinessSettings({ whatsappNumber: normalizeWhatsAppNumber(value) });
+    return true;
+  }, []);
+
   const updateOrderStatus = useCallback((orderId: string, status: OrderStatus) => {
     setOrders((current) => current.map((order) => order.id === orderId ? { ...order, status } : order));
   }, []);
@@ -217,7 +234,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     setProducts((current) => current.map((product) => product.id === productId ? { ...product, showInCatalog: !product.showInCatalog } : product));
   }, []);
 
-  const value = useMemo(() => ({ products, orders, cart, catalogCart, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateOrderStatus, toggleCatalog, hydrated }), [products, orders, cart, catalogCart, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateOrderStatus, toggleCatalog, hydrated]);
+  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, hydrated]);
 
   return <NexoContext.Provider value={value}>{children}</NexoContext.Provider>;
 }

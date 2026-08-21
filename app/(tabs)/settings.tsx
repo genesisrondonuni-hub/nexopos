@@ -1,16 +1,18 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router } from "expo-router";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { Card, colors, SectionTitle, SoftButton } from "@/components/nexo-ui";
 import { ScreenContainer } from "@/components/screen-container";
+import { useNexo } from "@/lib/pos-store";
 
-function SettingRow({ icon, title, description }: { icon: keyof typeof MaterialIcons.glyphMap; title: string; description: string }) {
-  return <View style={styles.row}><View style={styles.rowIcon}><MaterialIcons name={icon} size={19} color={colors.green} /></View><View style={styles.rowCopy}><Text style={styles.rowTitle}>{title}</Text><Text style={styles.rowDescription}>{description}</Text></View><MaterialIcons name="chevron-right" size={20} color={colors.muted} /></View>;
+function SettingRow({ icon, title, description, onPress }: { icon: keyof typeof MaterialIcons.glyphMap; title: string; description: string; onPress?: () => void }) {
+  return <Pressable disabled={!onPress} onPress={onPress} style={({ pressed }) => [styles.row, pressed && onPress && styles.rowPressed]}><View style={styles.rowIcon}><MaterialIcons name={icon} size={19} color={colors.green} /></View><View style={styles.rowCopy}><Text style={styles.rowTitle}>{title}</Text><Text style={styles.rowDescription}>{description}</Text></View><MaterialIcons name="chevron-right" size={20} color={colors.muted} /></Pressable>;
 }
 
 export default function SettingsScreen() {
-  return <ScreenContainer containerClassName="bg-[#F6F3EE]" className="px-5"><ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}><View><Text style={styles.eyebrow}>NEXO CAFÉ</Text><Text style={styles.title}>Más opciones</Text></View><Card style={styles.businessCard}><View style={styles.logo}><Text style={styles.logoText}>NC</Text></View><View style={styles.businessCopy}><Text style={styles.businessTitle}>Nexo Café</Text><Text style={styles.businessSub}>Restaurante · Régimen simple</Text></View><View style={styles.openPill}><Text style={styles.openText}>ABIERTO</Text></View></Card><SoftButton label="Abrir catálogo público" icon="storefront" onPress={() => router.push("/shop")} /><SectionTitle title="Configuración" /><Card style={styles.settingsCard}><SettingRow icon="storefront" title="Datos del negocio" description="Logo, horarios y tienda virtual" /><SettingRow icon="group" title="Equipo y permisos" description="Administrador, cajero y vendedor" /><SettingRow icon="request-quote" title="Facturación" description="DIAN y comprobantes electrónicos" /><SettingRow icon="analytics" title="Reportes" description="Ventas, gastos y rendimiento" /></Card><SectionTitle title="Soporte" /><SoftButton label="Centro de ayuda" icon="help-outline" onPress={() => undefined} /><Text style={styles.version}>NexoPOS · Versión 1.0.0</Text></ScrollView></ScreenContainer>;
+  const { businessSettings } = useNexo();
+  return <ScreenContainer containerClassName="bg-[#F6F3EE]" className="px-5"><ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}><View><Text style={styles.eyebrow}>NEXO CAFÉ</Text><Text style={styles.title}>Más opciones</Text></View><Card style={styles.businessCard}><View style={styles.logo}><Text style={styles.logoText}>NC</Text></View><View style={styles.businessCopy}><Text style={styles.businessTitle}>Nexo Café</Text><Text style={styles.businessSub}>Restaurante · Régimen simple</Text></View><View style={styles.openPill}><Text style={styles.openText}>ABIERTO</Text></View></Card><SoftButton label="Abrir catálogo público" icon="storefront" onPress={() => router.push("/shop")} /><SectionTitle title="Configuración" /><Card style={styles.settingsCard}><SettingRow icon="chat" title="Canal de pedidos" description={`WhatsApp: +${businessSettings.whatsappNumber}`} onPress={() => router.push("/business-settings" as never)} /><SettingRow icon="storefront" title="Datos del negocio" description="Logo, horarios y tienda virtual" /><SettingRow icon="group" title="Equipo y permisos" description="Administrador, cajero y vendedor" /><SettingRow icon="request-quote" title="Facturación" description="DIAN y comprobantes electrónicos" /><SettingRow icon="analytics" title="Reportes" description="Ventas, gastos y rendimiento" /></Card><SectionTitle title="Soporte" /><SoftButton label="Centro de ayuda" icon="help-outline" onPress={() => undefined} /><Text style={styles.version}>NexoPOS · Versión 1.0.0</Text></ScrollView></ScreenContainer>;
 }
 
 const styles = StyleSheet.create({
@@ -27,6 +29,7 @@ const styles = StyleSheet.create({
   openText: { color: colors.green, fontSize: 9, fontWeight: "800" },
   settingsCard: { paddingBottom: 0, paddingTop: 0 },
   row: { alignItems: "center", borderBottomColor: colors.line, borderBottomWidth: 1, flexDirection: "row", gap: 11, minHeight: 74 },
+  rowPressed: { opacity: 0.68 },
   rowIcon: { alignItems: "center", backgroundColor: colors.mint, borderRadius: 11, height: 36, justifyContent: "center", width: 36 },
   rowCopy: { flex: 1 },
   rowTitle: { color: colors.ink, fontSize: 13, fontWeight: "800" },

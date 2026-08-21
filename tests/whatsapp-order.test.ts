@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildWhatsAppMessage, buildWhatsAppOrderUrl } from "../lib/whatsapp";
+import { buildWhatsAppMessage, buildWhatsAppOrderUrl, isValidWhatsAppNumber, normalizeWhatsAppNumber } from "../lib/whatsapp";
 import type { Order } from "../shared/pos-types";
 
 const deliveryOrder: Order = {
@@ -35,5 +35,11 @@ describe("mensaje de WhatsApp del catálogo", () => {
     const url = buildWhatsAppOrderUrl(deliveryOrder, "+57 (300) 555-0183");
     expect(url).toMatch(/^https:\/\/wa\.me\/573005550183\?text=/);
     expect(decodeURIComponent(url)).toContain("Bowl campesino");
+  });
+
+  it("normaliza y valida números internacionales de WhatsApp", () => {
+    expect(normalizeWhatsAppNumber("+57 (300) 555-0183")).toBe("573005550183");
+    expect(isValidWhatsAppNumber("+57 (300) 555-0183")).toBe(true);
+    expect(isValidWhatsAppNumber("300-55")).toBe(false);
   });
 });

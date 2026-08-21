@@ -12,7 +12,7 @@ import { buildWhatsAppOrderUrl } from "@/lib/whatsapp";
 import type { CartItem } from "@/shared/pos-types";
 
 export default function ShopCheckoutScreen() {
-  const { catalogCart, setCatalogQuantity, createPublicOrder } = useNexo();
+  const { catalogCart, setCatalogQuantity, createPublicOrder, businessSettings } = useNexo();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [delivery, setDelivery] = useState<"Recogida" | "Domicilio">("Recogida");
@@ -24,7 +24,7 @@ export default function ShopCheckoutScreen() {
     const order = createPublicOrder({ customerName: name.trim(), customerPhone: phone.trim(), delivery, deliveryAddress: delivery === "Domicilio" ? address.trim() : undefined });
     if (!order) return;
     haptic.success();
-    const url = buildWhatsAppOrderUrl(order);
+    const url = buildWhatsAppOrderUrl(order, businessSettings.whatsappNumber);
     try {
       const supported = await Linking.canOpenURL(url);
       if (!supported) throw new Error("unsupported");
