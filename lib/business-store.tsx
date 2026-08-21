@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import type { BusinessConfiguration, BusinessFeatures, BusinessProfileDefinition, BusinessProfileId } from "@/shared/business-types";
+import { canRemoveCategory, hasCategoryName, normalizeCategoryName } from "../shared/category-utils";
 
 const STORAGE_KEY = "@nexopos:business-profile:v1";
 
@@ -19,6 +20,7 @@ const defaultConfiguration: BusinessConfiguration = {
   profileId: defaultProfile.id,
   businessName: "Nexo Café",
   suggestedCategories: defaultProfile.suggestedCategories,
+  categories: defaultProfile.suggestedCategories,
   features: defaultProfile.features,
 };
 
@@ -29,6 +31,9 @@ type BusinessContextValue = {
   selectProfile: (profileId: BusinessProfileId) => void;
   updateBusinessName: (businessName: string) => void;
   updateFeatures: (changes: Partial<BusinessFeatures>) => void;
+  addCategory: (name: string) => boolean;
+  renameCategory: (currentName: string, nextName: string) => boolean;
+  removeCategory: (name: string) => boolean;
 };
 
 const BusinessContext = createContext<BusinessContextValue | undefined>(undefined);
@@ -43,7 +48,11 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
         const saved = await AsyncStorage.getItem(STORAGE_KEY);
         if (!saved) return;
         const parsed = JSON.parse(saved) as BusinessConfiguration;
-        if (BUSINESS_PROFILES.some((profile) => profile.id === parsed.profileId) && parsed.businessName) setConfiguration(parsed);
+        if (BUSINESS_PROFILES.some((profile) => profile.id === parsed.profileId) && parsed.businessName) {
+          const categories = Array.isArray(parsed.categories) && parsed.categories.length ? parsed.categories : parsed.suggestedCategories;
+          const normalizedCategories = categories.map(normalizeCategoryName).filter((category): category is string => Boolean(category));
+          setConfiguration({ ...parsed, categories: [...new Set(normalizedCategories)] });
+        }
       } catch {
         // The default restaurant profile remains available when local preferences cannot be restored.
       } finally {
@@ -61,7 +70,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const selectProfile = useCallback((profileId: BusinessProfileId) => {
     const profile = BUSINESS_PROFILES.find((entry) => entry.id === profileId);
     if (!profile) return;
-    setConfiguration((current) => ({ ...current, profileId, suggestedCategories: profile.suggestedCategories, features: profile.features }));
+    setConfiguration((current) => ({ ...current, profileId, suggestedCategories: profile.suggestedCategories, categories: profile.suggestedCategories, features: profile.features }));
   }, []);
 
   const updateBusinessName = useCallback((businessName: string) => {
@@ -73,8 +82,42 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     setConfiguration((current) => ({ ...current, features: { ...current.features, ...changes } }));
   }, []);
 
+  const addCategory = useCallback((name: string) => {
+    const normalized = normalizeCategoryName(name);
+    if (!normalized) return false;
+    let added = false;
+    setConfiguration((current) => {
+      if (hasCategoryName(current.categories, normalized)) return current;
+      added = true;
+      return { ...current, categories: [...current.categories, normalized] };
+    });
+    return added;
+  }, []);
+
+  const renameCategory = useCallback((currentName: string, nextName: string) => {
+    const normalized = normalizeCategoryName(nextName);
+    if (!normalized) return false;
+    let renamed = false;
+    setConfiguration((current) => {
+      if (hasCategoryName(current.categories, normalized, currentName)) return current;
+      renamed = true;
+      return { ...current, categories: current.categories.map((category) => category === currentName ? normalized : category) };
+    });
+    return renamed;
+  }, []);
+
+  const removeCategory = useCallback((name: string) => {
+    let removed = false;
+    setConfiguration((current) => {
+      if (!canRemoveCategory(current.categories, name)) return current;
+      removed = true;
+      return { ...current, categories: current.categories.filter((category) => category !== name) };
+    });
+    return removed;
+  }, []);
+
   const profile = useMemo(() => BUSINESS_PROFILES.find((entry) => entry.id === configuration.profileId) ?? defaultProfile, [configuration.profileId]);
-  const value = useMemo(() => ({ configuration, profile, hydrated, selectProfile, updateBusinessName, updateFeatures }), [configuration, profile, hydrated, selectProfile, updateBusinessName, updateFeatures]);
+  const value = useMemo(() => ({ configuration, profile, hydrated, selectProfile, updateBusinessName, updateFeatures, addCategory, renameCategory, removeCategory }), [configuration, profile, hydrated, selectProfile, updateBusinessName, updateFeatures, addCategory, renameCategory, removeCategory]);
   return <BusinessContext.Provider value={value}>{children}</BusinessContext.Provider>;
 }
 

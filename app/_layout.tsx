@@ -95,6 +95,7 @@ export default function RootLayout() {
                   <Stack.Screen name="shop-checkout" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="business-settings" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="business-profile" options={{ presentation: "formSheet" }} />
+                  <Stack.Screen name="product-categories" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="crm-settings" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="oauth/callback" />
                 </Stack>

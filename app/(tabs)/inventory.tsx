@@ -1,5 +1,5 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Card, colors, formatCOP, SoftButton } from "@/components/nexo-ui";
 import { ScreenContainer } from "@/components/screen-container";
@@ -9,14 +9,14 @@ import { useBusiness } from "@/lib/business-store";
 import type { Product } from "@/shared/pos-types";
 
 export default function InventoryScreen() {
-  const { products, toggleCatalog } = useNexo();
+  const { products, toggleCatalog, updateProductCategory } = useNexo();
   const { profile, configuration } = useBusiness();
   const alerts = products.filter((product) => product.stock <= product.minStock).length;
   const renderProduct = ({ item }: { item: Product }) => {
     const atMinimum = item.stock <= item.minStock;
     return <Card style={styles.productCard}>
       <View style={[styles.productIcon, { backgroundColor: atMinimum ? "#FDE9E4" : colors.mint }]}><MaterialIcons name={item.type === "SERVICE" ? "room-service" : "inventory-2"} size={20} color={atMinimum ? colors.coral : colors.green} /></View>
-      <View style={styles.productBody}><Text style={styles.productName}>{item.name}</Text><Text style={styles.productMeta}>{item.category} · {formatCOP(item.price)}</Text><Text style={[styles.stock, atMinimum && styles.lowStock]}>{atMinimum ? "Stock mínimo" : `${item.stock} unidades disponibles`}</Text></View>
+      <View style={styles.productBody}><Text style={styles.productName}>{item.name}</Text><Pressable onPress={() => Alert.alert("Asignar categoría", item.name, [...configuration.categories.map((category) => ({ text: category, onPress: () => { haptic.medium(); updateProductCategory(item.id, category); } })), { text: "Cancelar", style: "cancel" }])} style={({ pressed }) => [styles.categoryButton, pressed && styles.pressed]}><Text style={styles.productMeta}>{item.category}</Text><MaterialIcons name="edit" size={12} color={colors.green} /></Pressable><Text style={[styles.stock, atMinimum && styles.lowStock]}>{atMinimum ? "Stock mínimo" : `${item.stock} unidades disponibles · ${formatCOP(item.price)}`}</Text></View>
       <Pressable onPress={() => { haptic.medium(); toggleCatalog(item.id); }} style={({ pressed }) => [styles.catalogToggle, item.showInCatalog && styles.catalogToggleOn, pressed && styles.pressed]}><MaterialIcons name={item.showInCatalog ? "visibility" : "visibility-off"} size={17} color={item.showInCatalog ? colors.white : colors.muted} /></Pressable>
     </Card>;
   };
@@ -38,6 +38,7 @@ const styles = StyleSheet.create({
   productBody: { flex: 1 },
   productName: { color: colors.ink, fontSize: 13, fontWeight: "800" },
   productMeta: { color: colors.muted, fontSize: 11, marginTop: 2 },
+  categoryButton: { alignItems: "center", flexDirection: "row", gap: 4, marginTop: 2, maxWidth: 170 },
   stock: { color: colors.green, fontSize: 11, fontWeight: "800", marginTop: 4 },
   lowStock: { color: colors.coral },
   catalogToggle: { alignItems: "center", backgroundColor: "#E8ECEA", borderRadius: 12, height: 36, justifyContent: "center", width: 36 },

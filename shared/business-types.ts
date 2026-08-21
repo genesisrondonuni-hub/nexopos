@@ -25,5 +25,6 @@ export type BusinessConfiguration = {
   profileId: BusinessProfileId;
   businessName: string;
   suggestedCategories: string[];
+  categories: string[];
   features: BusinessFeatures;
 };

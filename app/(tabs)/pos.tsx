@@ -1,5 +1,6 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router } from "expo-router";
+import { useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Card, colors, formatCOP, PrimaryButton, SoftButton } from "@/components/nexo-ui";
@@ -12,12 +13,15 @@ import type { Product } from "@/shared/pos-types";
 export default function PosScreen() {
   const { products, cart, addToCart, addFreeSale } = useNexo();
   const { profile, configuration } = useBusiness();
-  const categories = ["Todos", ...configuration.suggestedCategories];
+  const categories = ["Todos", ...configuration.categories];
+  const [activeCategory, setActiveCategory] = useState("Todos");
+  const selectedCategory = categories.includes(activeCategory) ? activeCategory : "Todos";
+  const visibleProducts = selectedCategory === "Todos" ? products : products.filter((product) => product.category === selectedCategory);
   const total = cart.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
   const renderProduct = ({ item }: { item: Product }) => (
     <Pressable onPress={() => { haptic.light(); addToCart(item); }} style={({ pressed }) => [styles.product, pressed && styles.productPressed]}>
-      <View style={[styles.productImage, { backgroundColor: item.category === "Bebidas" ? "#DFEFFF" : item.category === "Postres" ? "#FDE9E4" : colors.mint }]}><MaterialIcons name={item.category === "Bebidas" ? "local-drink" : item.category === "Postres" ? "cake" : configuration.features.recipes ? "restaurant" : "local-grocery-store"} size={24} color={item.category === "Postres" ? colors.coral : colors.green} /></View>
+      <View style={[styles.productImage, { backgroundColor: colors.mint }]}><MaterialIcons name={configuration.features.recipes ? "restaurant" : "local-grocery-store"} size={24} color={colors.green} /></View>
       <Text numberOfLines={2} style={styles.productName}>{item.name}</Text>
       <View style={styles.productFooter}><Text style={styles.productPrice}>{formatCOP(item.price)}</Text><Text style={[styles.stock, item.stock <= item.minStock && styles.lowStock]}>{item.stock} disp.</Text></View>
     </Pressable>
@@ -26,7 +30,7 @@ export default function PosScreen() {
   return (
     <ScreenContainer containerClassName="bg-[#F6F3EE]" className="px-5">
       <FlatList
-        data={products}
+        data={visibleProducts}
         renderItem={renderProduct}
         keyExtractor={(item) => item.id}
         numColumns={2}
@@ -37,7 +41,7 @@ export default function PosScreen() {
           <>
             <View style={styles.header}><View><Text style={styles.eyebrow}>{profile.shortLabel.toUpperCase()} · PUNTO DE VENTA</Text><Text style={styles.title}>Nueva venta</Text></View><Pressable onPress={() => { haptic.medium(); addFreeSale(); }} style={({ pressed }) => [styles.iconButton, pressed && styles.productPressed]}><MaterialIcons name="add" size={22} color={colors.green} /></Pressable></View>
             <Pressable onPress={() => undefined} style={({ pressed }) => [styles.search, pressed && styles.productPressed]}><MaterialIcons name="search" size={21} color={colors.muted} /><Text style={styles.searchText}>{configuration.features.barcode ? "Buscar producto o código" : "Buscar producto o servicio"}</Text>{configuration.features.barcode ? <MaterialIcons name="qr-code-scanner" size={20} color={colors.green} /> : <MaterialIcons name="tune" size={20} color={colors.green} />}</Pressable>
-            <View style={styles.categoryRow}><View style={styles.categoryActive}><Text style={styles.categoryActiveText}>{categories[0]}</Text></View><View style={styles.category}><Text style={styles.categoryText}>{categories[1]}</Text></View><View style={styles.category}><Text style={styles.categoryText}>{categories[2]}</Text></View><View style={styles.category}><Text style={styles.categoryText}>{categories[3]}</Text></View></View>
+            <FlatList horizontal data={categories} keyExtractor={(item) => item} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow} renderItem={({ item }) => <Pressable onPress={() => { haptic.light(); setActiveCategory(item); }} style={({ pressed }) => [item === selectedCategory ? styles.categoryActive : styles.category, pressed && styles.productPressed]}><Text style={item === selectedCategory ? styles.categoryActiveText : styles.categoryText}>{item}</Text></Pressable>} />
             <Card style={styles.cartPreview}>
               <View style={styles.cartTop}><View style={styles.cartCount}><MaterialIcons name="shopping-bag" size={17} color={colors.green} /><Text style={styles.cartCountText}>{cart.length ? `${cart.length} productos en la cuenta` : "La cuenta está vacía"}</Text></View><Text style={styles.cartTotal}>{formatCOP(total)}</Text></View>
               {cart.length ? <PrimaryButton label="Revisar y cobrar" icon="arrow-forward" onPress={() => router.push("/checkout")} /> : <SoftButton label="Agregar venta libre" icon="add-circle-outline" onPress={() => { haptic.medium(); addFreeSale(); }} />}

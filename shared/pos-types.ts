@@ -1,6 +1,6 @@
 export type PaymentMethod = "Efectivo" | "Tarjeta" | "Transferencia" | "Billetera";
 export type OrderStatus = "PENDIENTE" | "EN PROCESO" | "PAGADO" | "ARCHIVADO";
-export type ProductCategory = "Entradas" | "Platos" | "Bebidas" | "Postres" | "Servicios";
+export type ProductCategory = string;
 
 export interface Product {
   id: string;

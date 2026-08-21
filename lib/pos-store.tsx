@@ -97,6 +97,7 @@ type NexoContextValue = {
   updateWhatsAppNumber: (value: string) => boolean;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   toggleCatalog: (productId: string) => void;
+  updateProductCategory: (productId: string, category: string) => void;
   hydrated: boolean;
 };
 
@@ -236,7 +237,13 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     setProducts((current) => current.map((product) => product.id === productId ? { ...product, showInCatalog: !product.showInCatalog } : product));
   }, []);
 
-  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, hydrated]);
+  const updateProductCategory = useCallback((productId: string, category: string) => {
+    const normalized = category.trim();
+    if (!normalized) return;
+    setProducts((current) => current.map((product) => product.id === productId ? { ...product, category: normalized } : product));
+  }, []);
+
+  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, hydrated]);
 
   return <NexoContext.Provider value={value}>{children}</NexoContext.Provider>;
 }

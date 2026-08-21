@@ -30,3 +30,7 @@
 - [x] Implementar la selección y edición administrativa del perfil de negocio.
 - [x] Adaptar la interfaz de POS, inventario y catálogo al perfil activo.
 - [x] Validar los perfiles multi-negocio y su persistencia local.
+- [x] Definir el modelo de categorías editables, sus reglas de nombre y persistencia local.
+- [x] Implementar la pantalla administrativa para crear, editar y eliminar categorías.
+- [x] Aplicar las categorías personalizadas al POS, inventario y catálogo.
+- [x] Validar la persistencia y las reglas de categorías personalizadas.
