@@ -19,6 +19,8 @@ NexoPOS se diseña para uso operativo en **orientación vertical 9:16**, prioriz
 | Catálogo público | Encabezado del negocio, buscador, categorías y productos visibles | Permitir al cliente descubrir el menú sin iniciar sesión |
 | Carrito público | Productos seleccionados, cantidades, subtotal y total | Ajustar el pedido antes de solicitar entrega o recogida |
 | Confirmación de pedido | Nombre, teléfono, modalidad de entrega y dirección opcional | Crear un mensaje estructurado y abrir WhatsApp con el pedido listo para enviar |
+| CRM | Resumen de oportunidades, clientes, etapa de venta, origen y estado de entrega | Dar seguimiento a conversaciones y convertir pedidos en ventas recurrentes |
+| Configuración de CRM | Etapas del pipeline, reglas de mensajería y preferencias de delivery | Permitir al administrador adaptar el proceso comercial sin modificar código |
 
 ## Flujos principales
 
@@ -29,6 +31,8 @@ El flujo de pedidos inicia en **Pedidos**, donde la persona usuaria selecciona u
 El flujo público se inicia desde una URL compartible del catálogo. La persona cliente explora únicamente los productos habilitados, agrega artículos al carrito y ajusta sus cantidades. Al continuar, completa su nombre, teléfono y método de entrega; si selecciona domicilio, se solicita una dirección. La acción final genera un mensaje legible con el detalle, total, modalidad de entrega y datos de contacto, y abre la conversación de WhatsApp del negocio. El pedido se registra en el estado local como *Pendiente* antes de la redirección, de manera que el personal puede atenderlo desde el módulo de pedidos.
 
 El flujo administrativo para WhatsApp parte de **Más opciones**. La persona administradora abre **Canal de pedidos**, edita el número con código de país y guarda el cambio. La aplicación elimina espacios y separadores, valida que el resultado tenga entre ocho y quince dígitos y conserva la configuración en el dispositivo. Los nuevos pedidos del catálogo usan de inmediato el número guardado.
+
+El CRM se organiza en un pipeline configurable que inicia en *Nuevo lead* y continúa con las etapas que el administrador defina. Cada oportunidad conserva el cliente, origen, valor estimado, último contacto y estado de entrega. Desde la configuración se pueden renombrar las etapas, activar o desactivar mensajes automáticos por evento y definir si el delivery está activo, su tarifa base, el umbral de envío gratis y las zonas cubiertas. Los secretos de Meta se mantienen fuera de la pantalla móvil; el administrador configura únicamente parámetros operativos no sensibles.
 
 ## Paleta y estilo visual
 

@@ -38,6 +38,7 @@ export interface Order {
   source: "POS" | "CATÁLOGO";
   delivery: "Mesa" | "Recogida" | "Domicilio";
   deliveryAddress?: string;
+  deliveryFee?: number;
   items: CartItem[];
   total: number;
   createdAt: string;

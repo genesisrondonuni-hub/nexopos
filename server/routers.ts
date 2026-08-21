@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as nexo from "./nexo-store";
+import { buildMetaTemplatePayload, getMetaWhatsAppStatus } from "./meta-whatsapp";
 
 const orderItemSchema = z.object({
   productId: z.string().min(1).optional(),
@@ -60,6 +61,14 @@ export const appRouter = router({
       orderId: z.string().min(1),
       status: z.enum(["PENDING", "PROCESSING", "PAID", "ARCHIVED"]),
     })).mutation(({ input }) => nexo.updateOrderStatus(input)),
+  }),
+  crm: router({
+    metaStatus: publicProcedure.query(() => getMetaWhatsAppStatus()),
+    previewTemplate: publicProcedure.input(z.object({
+      to: z.string().min(8).max(30),
+      templateName: z.string().min(1).max(512),
+      parameters: z.array(z.string().max(1024)).max(10),
+    })).query(({ input }) => buildMetaTemplatePayload(input)),
   }),
 });
 

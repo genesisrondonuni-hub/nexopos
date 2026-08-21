@@ -24,6 +24,7 @@ export function buildWhatsAppMessage(order: Order) {
     "",
     `*Total: ${money(order.total)}*`,
     `Entrega: ${order.delivery}`,
+    ...(order.deliveryFee ? [`Costo de delivery: ${money(order.deliveryFee)}`] : []),
     ...(order.deliveryAddress ? [`Dirección: ${order.deliveryAddress}`] : []),
     `Cliente: ${order.customerName}`,
     `Teléfono: ${order.customerPhone ?? "No informado"}`,

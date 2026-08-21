@@ -72,6 +72,7 @@ type PublicOrderInput = {
   customerPhone: string;
   delivery: "Recogida" | "Domicilio";
   deliveryAddress?: string;
+  deliveryFee?: number;
 };
 
 export type BusinessSettings = {
@@ -201,7 +202,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
 
   const createPublicOrder = useCallback((input: PublicOrderInput) => {
     if (!catalogCart.length) return null;
-    const total = catalogCart.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+    const total = catalogCart.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0) + (input.deliveryFee ?? 0);
     const order: Order = {
       id: `o-${Date.now()}`,
       code: `#${1050 + orders.length}`,
@@ -211,6 +212,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
       source: "CATÁLOGO",
       delivery: input.delivery,
       deliveryAddress: input.deliveryAddress,
+      deliveryFee: input.deliveryFee,
       total,
       createdAt: "Ahora",
       items: catalogCart,

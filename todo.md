@@ -16,3 +16,12 @@
 - [x] Definir la configuración persistente y la validación del número de WhatsApp del negocio.
 - [x] Implementar la pantalla administrativa para editar y guardar el número de WhatsApp.
 - [x] Conectar el envío del catálogo con el número configurable y comprobar su formato.
+- [x] Definir los campos del CRM, etapas de venta y reglas de automatización por WhatsApp.
+- [x] Diseñar el modelo de datos y las pantallas de oportunidades, contactos y entregas.
+- [x] Implementar el CRM móvil con pipeline de ventas y seguimiento de entregas.
+- [ ] Implementar la configuración de Meta WhatsApp Cloud API y las validaciones de credenciales.
+- [ ] Implementar el envío automatizado de mensajes y actualizaciones de entrega mediante Meta WhatsApp.
+- [x] Validar los flujos de CRM, automatización y delivery con pruebas deterministas.
+- [x] Permitir que el administrador configure etapas, reglas de seguimiento, plantillas y preferencias de delivery del CRM.
+- [ ] Activar la conexión oficial de Meta WhatsApp Cloud API cuando el administrador proporcione las credenciales.
+- [x] Preparar el adaptador de plantillas y estados de Meta WhatsApp sin activar credenciales.
