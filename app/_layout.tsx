@@ -21,6 +21,7 @@ import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-run
 import { NexoProvider } from "@/lib/pos-store";
 import { CrmProvider } from "@/lib/crm-store";
 import { BusinessProvider } from "@/lib/business-store";
+import { IntegrationsProvider } from "@/lib/integrations-store";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -88,7 +89,8 @@ export default function RootLayout() {
           <BusinessProvider>
             <NexoProvider>
               <CrmProvider>
-                <Stack screenOptions={{ headerShown: false }}>
+                <IntegrationsProvider>
+                  <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen name="checkout" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="shop" />
@@ -96,9 +98,13 @@ export default function RootLayout() {
                   <Stack.Screen name="business-settings" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="business-profile" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="product-categories" options={{ presentation: "formSheet" }} />
+                  <Stack.Screen name="inventory-import" options={{ presentation: "formSheet" }} />
+                  <Stack.Screen name="gemini-settings" options={{ presentation: "formSheet" }} />
+                  <Stack.Screen name="api-integrations" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="crm-settings" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="oauth/callback" />
-                </Stack>
+                  </Stack>
+                </IntegrationsProvider>
               </CrmProvider>
             </NexoProvider>
           </BusinessProvider>

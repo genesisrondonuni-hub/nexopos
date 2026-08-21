@@ -34,3 +34,15 @@
 - [x] Implementar la pantalla administrativa para crear, editar y eliminar categorías.
 - [x] Aplicar las categorías personalizadas al POS, inventario y catálogo.
 - [x] Validar la persistencia y las reglas de categorías personalizadas.
+- [x] Definir columnas, validaciones y reglas de deduplicación para importaciones TXT, Excel y Google Sheets.
+- [x] Diseñar la vista de importación, previsualización y aplicación segura de productos.
+- [x] Implementar la carga de TXT y Excel con vista previa y actualización de inventario.
+- [x] Implementar la importación desde Google Sheets mediante un enlace publicado o conector autorizado.
+- [x] Diseñar el asistente Gemini para obtener análisis de inventario, ventas y oportunidades de CRM.
+- [x] Integrar Gemini de forma segura y presentar recomendaciones accionables en el CRM.
+- [ ] Validar los archivos importados, el análisis de IA y los flujos de error.
+- [x] Añadir un panel administrativo que muestre el estado de Gemini y solicite la clave únicamente mediante configuración segura del servidor.
+- [x] Definir qué parámetros de API son editables desde la aplicación y cuáles se mantienen como secretos del servidor.
+- [x] Implementar un centro de integraciones para configurar Gemini, modelos y estados operativos.
+- [x] Conectar la configuración de Gemini al análisis de inventario, ventas y CRM sin exponer la clave.
+- [ ] Validar el centro de integraciones y los flujos de configuración segura.

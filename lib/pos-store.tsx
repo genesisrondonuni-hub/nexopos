@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 
 import { DEFAULT_SHOP_WHATSAPP_NUMBER, isValidWhatsAppNumber, normalizeWhatsAppNumber } from "@/lib/whatsapp";
 import type { CartItem, DailySummary, Order, OrderStatus, PaymentSplit, Product } from "@/shared/pos-types";
+import type { ImportedInventoryProduct } from "@/shared/inventory-import";
 
 const starterProducts: Product[] = [
   { id: "p-arepa", name: "Arepa de queso", category: "Entradas", price: 8500, cost: 2900, stock: 32, minStock: 10, showInCatalog: true, type: "FINAL" },
@@ -98,6 +99,7 @@ type NexoContextValue = {
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   toggleCatalog: (productId: string) => void;
   updateProductCategory: (productId: string, category: string) => void;
+  upsertImportedProducts: (products: ImportedInventoryProduct[]) => { created: number; updated: number };
   hydrated: boolean;
 };
 
@@ -243,7 +245,27 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     setProducts((current) => current.map((product) => product.id === productId ? { ...product, category: normalized } : product));
   }, []);
 
-  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, hydrated]);
+  const upsertImportedProducts = useCallback((importedProducts: ImportedInventoryProduct[]) => {
+    let created = 0;
+    let updated = 0;
+    setProducts((current) => {
+      const next = [...current];
+      importedProducts.forEach((item, index) => {
+        const existingIndex = next.findIndex((product) => product.name.toLocaleLowerCase() === item.name.toLocaleLowerCase());
+        if (existingIndex >= 0) {
+          updated += 1;
+          next[existingIndex] = { ...next[existingIndex], ...item };
+        } else {
+          created += 1;
+          next.push({ ...item, id: `import-${Date.now()}-${index}`, type: "FINAL" });
+        }
+      });
+      return next;
+    });
+    return { created, updated };
+  }, []);
+
+  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, upsertImportedProducts, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, upsertImportedProducts, hydrated]);
 
   return <NexoContext.Provider value={value}>{children}</NexoContext.Provider>;
 }
