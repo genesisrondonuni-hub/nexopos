@@ -87,6 +87,8 @@ export default function RootLayout() {
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="checkout" options={{ presentation: "formSheet" }} />
+              <Stack.Screen name="shop" />
+              <Stack.Screen name="shop-checkout" options={{ presentation: "formSheet" }} />
               <Stack.Screen name="oauth/callback" />
             </Stack>
           </NexoProvider>

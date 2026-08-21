@@ -37,6 +37,7 @@ export interface Order {
   status: OrderStatus;
   source: "POS" | "CATÁLOGO";
   delivery: "Mesa" | "Recogida" | "Domicilio";
+  deliveryAddress?: string;
   items: CartItem[];
   total: number;
   createdAt: string;

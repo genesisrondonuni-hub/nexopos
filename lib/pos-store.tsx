@@ -66,16 +66,27 @@ type CheckoutInput = {
   tip: number;
 };
 
+type PublicOrderInput = {
+  customerName: string;
+  customerPhone: string;
+  delivery: "Recogida" | "Domicilio";
+  deliveryAddress?: string;
+};
+
 type NexoContextValue = {
   products: Product[];
   orders: Order[];
   cart: CartItem[];
+  catalogCart: CartItem[];
   summary: DailySummary;
   addToCart: (product: Product) => void;
   addFreeSale: () => void;
   setCartQuantity: (itemId: string, quantity: number) => void;
   removeFromCart: (itemId: string) => void;
   checkout: (input: CheckoutInput) => Order | null;
+  addToCatalogCart: (product: Product) => void;
+  setCatalogQuantity: (itemId: string, quantity: number) => void;
+  createPublicOrder: (input: PublicOrderInput) => Order | null;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   toggleCatalog: (productId: string) => void;
   hydrated: boolean;
@@ -87,6 +98,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>(starterProducts);
   const [orders, setOrders] = useState<Order[]>(starterOrders);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [catalogCart, setCatalogCart] = useState<CartItem[]>([]);
   const [summary, setSummary] = useState<DailySummary>({ sales: 1284400, expenses: 342800, profit: 941600, orders: 48 });
   const [hydrated, setHydrated] = useState(false);
 
@@ -132,6 +144,19 @@ export function NexoProvider({ children }: { children: ReactNode }) {
 
   const removeFromCart = useCallback((itemId: string) => setCart((current) => current.filter((item) => item.id !== itemId)), []);
 
+  const addToCatalogCart = useCallback((product: Product) => {
+    if (!product.showInCatalog || product.stock <= 0) return;
+    setCatalogCart((current) => {
+      const found = current.find((item) => item.productId === product.id);
+      if (found) return current.map((item) => item.id === found.id ? { ...item, quantity: item.quantity + 1 } : item);
+      return [...current, { id: `shop-${Date.now()}`, productId: product.id, name: product.name, quantity: 1, unitPrice: product.price, isFreeSale: false }];
+    });
+  }, []);
+
+  const setCatalogQuantity = useCallback((itemId: string, quantity: number) => {
+    setCatalogCart((current) => quantity <= 0 ? current.filter((item) => item.id !== itemId) : current.map((item) => item.id === itemId ? { ...item, quantity } : item));
+  }, []);
+
   const checkout = useCallback((input: CheckoutInput) => {
     const subtotal = cart.reduce((total, item) => total + item.quantity * item.unitPrice, 0);
     const total = subtotal + input.tip;
@@ -163,6 +188,27 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     return order;
   }, [cart, orders.length, products]);
 
+  const createPublicOrder = useCallback((input: PublicOrderInput) => {
+    if (!catalogCart.length) return null;
+    const total = catalogCart.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+    const order: Order = {
+      id: `o-${Date.now()}`,
+      code: `#${1050 + orders.length}`,
+      customerName: input.customerName,
+      customerPhone: input.customerPhone,
+      status: "PENDIENTE",
+      source: "CATÁLOGO",
+      delivery: input.delivery,
+      deliveryAddress: input.deliveryAddress,
+      total,
+      createdAt: "Ahora",
+      items: catalogCart,
+    };
+    setOrders((current) => [order, ...current]);
+    setCatalogCart([]);
+    return order;
+  }, [catalogCart, orders.length]);
+
   const updateOrderStatus = useCallback((orderId: string, status: OrderStatus) => {
     setOrders((current) => current.map((order) => order.id === orderId ? { ...order, status } : order));
   }, []);
@@ -171,7 +217,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     setProducts((current) => current.map((product) => product.id === productId ? { ...product, showInCatalog: !product.showInCatalog } : product));
   }, []);
 
-  const value = useMemo(() => ({ products, orders, cart, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, updateOrderStatus, toggleCatalog, hydrated }), [products, orders, cart, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, updateOrderStatus, toggleCatalog, hydrated]);
+  const value = useMemo(() => ({ products, orders, cart, catalogCart, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateOrderStatus, toggleCatalog, hydrated }), [products, orders, cart, catalogCart, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateOrderStatus, toggleCatalog, hydrated]);
 
   return <NexoContext.Provider value={value}>{children}</NexoContext.Provider>;
 }

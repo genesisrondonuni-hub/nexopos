@@ -15,12 +15,17 @@ NexoPOS se diseña para uso operativo en **orientación vertical 9:16**, prioriz
 | Pedidos | Lista filtrable por estado: pendientes, en proceso, pagados y archivados | Actualizar el estado de una orden y revisar su entrega o recogida |
 | Detalle de pedido | Cliente, productos, total, método de entrega y estado | Revisar el pedido y avanzar su ciclo de atención |
 | Ajustes | Resumen del negocio, caja activa y accesos administrativos | Centralizar futuras opciones de negocio, empleados y facturación |
+| Catálogo público | Encabezado del negocio, buscador, categorías y productos visibles | Permitir al cliente descubrir el menú sin iniciar sesión |
+| Carrito público | Productos seleccionados, cantidades, subtotal y total | Ajustar el pedido antes de solicitar entrega o recogida |
+| Confirmación de pedido | Nombre, teléfono, modalidad de entrega y dirección opcional | Crear un mensaje estructurado y abrir WhatsApp con el pedido listo para enviar |
 
 ## Flujos principales
 
 El flujo de venta comienza en **Punto de venta**. La persona cajera busca o selecciona un artículo, lo añade a la cuenta, opcionalmente agrega una venta libre y toca **Cobrar**. En la hoja de cobro puede distribuir el total entre efectivo y tarjeta, ingresar una propina y verificar el cambio antes de confirmar. Al completarse, la aplicación actualiza el resumen del día, registra el movimiento y reduce el inventario de los productos vendidos.
 
 El flujo de pedidos inicia en **Pedidos**, donde la persona usuaria selecciona una orden pendiente. En el detalle puede moverla a *En proceso*, *Pagado* o *Archivado*, manteniendo un historial operativo comprensible. En una siguiente iteración, estas mismas órdenes podrán originarse desde el catálogo virtual y generar el mensaje estructurado para WhatsApp.
+
+El flujo público se inicia desde una URL compartible del catálogo. La persona cliente explora únicamente los productos habilitados, agrega artículos al carrito y ajusta sus cantidades. Al continuar, completa su nombre, teléfono y método de entrega; si selecciona domicilio, se solicita una dirección. La acción final genera un mensaje legible con el detalle, total, modalidad de entrega y datos de contacto, y abre la conversación de WhatsApp del negocio. El pedido se registra en el estado local como *Pendiente* antes de la redirección, de manera que el personal puede atenderlo desde el módulo de pedidos.
 
 ## Paleta y estilo visual
 
