@@ -2,9 +2,9 @@ import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { HapticTab } from "@/components/haptic-tab";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Platform } from "react-native";
 import { useColors } from "@/hooks/use-colors";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 export default function TabLayout() {
   const colors = useColors();
@@ -31,10 +31,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "Resumen",
+          tabBarIcon: ({ color }) => <MaterialIcons size={24} name="space-dashboard" color={color} />,
         }}
       />
+      <Tabs.Screen name="pos" options={{ title: "Vender", tabBarIcon: ({ color }) => <MaterialIcons size={24} name="point-of-sale" color={color} /> }} />
+      <Tabs.Screen name="inventory" options={{ title: "Inventario", tabBarIcon: ({ color }) => <MaterialIcons size={24} name="inventory-2" color={color} /> }} />
+      <Tabs.Screen name="orders" options={{ title: "Pedidos", tabBarIcon: ({ color }) => <MaterialIcons size={24} name="receipt-long" color={color} /> }} />
+      <Tabs.Screen name="settings" options={{ title: "Más", tabBarIcon: ({ color }) => <MaterialIcons size={24} name="more-horiz" color={color} /> }} />
     </Tabs>
   );
 }

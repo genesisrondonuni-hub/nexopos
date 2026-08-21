@@ -1,0 +1,50 @@
+export type PaymentMethod = "Efectivo" | "Tarjeta" | "Transferencia" | "Billetera";
+export type OrderStatus = "PENDIENTE" | "EN PROCESO" | "PAGADO" | "ARCHIVADO";
+export type ProductCategory = "Entradas" | "Platos" | "Bebidas" | "Postres" | "Servicios";
+
+export interface Product {
+  id: string;
+  name: string;
+  category: ProductCategory;
+  price: number;
+  cost: number;
+  stock: number;
+  minStock: number;
+  showInCatalog: boolean;
+  type: "FINAL" | "RECIPE" | "SERVICE";
+}
+
+export interface CartItem {
+  id: string;
+  productId?: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  isFreeSale: boolean;
+}
+
+export interface PaymentSplit {
+  id: string;
+  method: PaymentMethod;
+  amount: number;
+}
+
+export interface Order {
+  id: string;
+  code: string;
+  customerName: string;
+  customerPhone?: string;
+  status: OrderStatus;
+  source: "POS" | "CATÁLOGO";
+  delivery: "Mesa" | "Recogida" | "Domicilio";
+  items: CartItem[];
+  total: number;
+  createdAt: string;
+}
+
+export interface DailySummary {
+  sales: number;
+  expenses: number;
+  profit: number;
+  orders: number;
+}
