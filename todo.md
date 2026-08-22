@@ -144,3 +144,4 @@
 - [x] Importar recepciones de mercancía desde hoja de cálculo y actualizar existencias.
 - [x] Generar la lista de productos por reponer según el stock mínimo.
 - [x] Validar y sincronizar el módulo de abastecimiento con GitHub.
+- [x] Reiniciar y comprobar el servidor de desarrollo tras la interrupción reportada.
