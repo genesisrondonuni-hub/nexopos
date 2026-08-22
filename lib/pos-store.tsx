@@ -105,6 +105,7 @@ type NexoContextValue = {
   setCatalogQuantity: (itemId: string, quantity: number) => void;
   createPublicOrder: (input: PublicOrderInput) => Order | null;
   createAgentOrder: (input: AgentOrderInput) => { order?: Order; reason?: string };
+  cancelPendingOrder: (orderId: string, windowMinutes: number) => { cancelled: boolean; reason?: string };
   updateWhatsAppNumber: (value: string) => boolean;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   toggleCatalog: (productId: string) => void;
@@ -261,13 +262,26 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     if (requested.length !== input.items.length || requested.some((item) => item.product.stock < item.quantity)) return { reason: "Uno o más productos ya no tienen existencias suficientes." };
     const items: CartItem[] = requested.map((item, index) => ({ id: `agent-${Date.now()}-${index}`, productId: item.product.id, productCode: item.product.code, name: item.product.name, quantity: item.quantity, unitPrice: item.product.price, isFreeSale: false }));
     const total = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
-    const order: Order = { id: `o-agent-${Date.now()}`, code: `#${1050 + orders.length}`, customerName, customerPhone, status: "PENDIENTE", source: "AGENTE", delivery: input.delivery, deliveryAddress: input.deliveryAddress?.trim(), total, createdAt: "Ahora", items };
+    const timestamp = Date.now();
+    const order: Order = { id: `o-agent-${timestamp}`, code: `#${1050 + orders.length}`, customerName, customerPhone, status: "PENDIENTE", source: "AGENTE", delivery: input.delivery, deliveryAddress: input.deliveryAddress?.trim(), total, createdAt: "Ahora", createdTimestamp: timestamp, items };
     setOrders((current) => [order, ...current]);
     setProducts((current) => current.map((product) => { const sold = requested.find((item) => item.productId === product.id)?.quantity ?? 0; return sold ? { ...product, stock: product.stock - sold } : product; }));
     setProductMovements((current) => [...requested.map((item, index) => ({ id: `mov-agent-${Date.now()}-${index}`, productId: item.productId, type: "VENTA_AGENTE" as const, label: `Pedido del agente ${order.code}`, quantityDelta: -item.quantity, stockAfter: item.product.stock - item.quantity, createdAt: "Ahora" })), ...current].slice(0, 400));
     setSummary((current) => ({ ...current, sales: current.sales + total, profit: current.profit + total - requested.reduce((sum, item) => sum + item.product.cost * item.quantity, 0), orders: current.orders + 1 }));
     return { order };
   }, [orders.length, products]);
+
+  const cancelPendingOrder = useCallback((orderId: string, windowMinutes: number) => {
+    const order = orders.find((item) => item.id === orderId);
+    if (!order || order.status !== "PENDIENTE") return { cancelled: false, reason: "Solo es posible cancelar pedidos que aún están pendientes." };
+    const elapsedMinutes = (Date.now() - (order.createdTimestamp ?? Date.now())) / 60_000;
+    if (elapsedMinutes > windowMinutes) return { cancelled: false, reason: "La ventana de cancelación configurada ya terminó." };
+    setOrders((current) => current.map((item) => item.id === orderId ? { ...item, status: "ARCHIVADO", cancelledAt: "Ahora", cancellationReason: "Cancelado por operador" } : item));
+    setProducts((current) => current.map((product) => { const restored = order.items.filter((item) => item.productId === product.id).reduce((sum, item) => sum + item.quantity, 0); return restored ? { ...product, stock: product.stock + restored } : product; }));
+    setProductMovements((current) => [...order.items.filter((item) => item.productId).map((item, index) => ({ id: `mov-cancel-${Date.now()}-${index}`, productId: item.productId!, type: "CANCELACIÓN" as const, label: `Cancelación ${order.code}`, quantityDelta: item.quantity, createdAt: "Ahora" })), ...current].slice(0, 400));
+    if (order.source === "AGENTE") setSummary((current) => ({ ...current, sales: Math.max(0, current.sales - order.total), profit: Math.max(0, current.profit - (order.total - order.items.reduce((sum, item) => sum + (products.find((product) => product.id === item.productId)?.cost ?? 0) * item.quantity, 0))), orders: Math.max(0, current.orders - 1) }));
+    return { cancelled: true };
+  }, [orders, products]);
 
   const updateWhatsAppNumber = useCallback((value: string) => {
     if (!isValidWhatsAppNumber(value)) return false;
@@ -341,7 +355,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     return { reverted: true };
   }, [importHistory, products]);
 
-  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, upsertImportedProducts, revertImport, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, upsertImportedProducts, revertImport, hydrated]);
+  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, upsertImportedProducts, revertImport, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, upsertImportedProducts, revertImport, hydrated]);
 
   return <NexoContext.Provider value={value}>{children}</NexoContext.Provider>;
 }

@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import type { CrmAutomationSettings, CrmMessageTemplates, CrmSettings, DeliveryPreferences, DeliveryStatus, SalesOpportunity } from "@/shared/crm-types";
+import type { AgentServicePolicy, CrmAutomationSettings, CrmMessageTemplates, CrmSettings, DeliveryPreferences, DeliveryStatus, SalesOpportunity } from "@/shared/crm-types";
 
 const STORAGE_KEY = "@nexopos:crm:v1";
 
@@ -14,7 +14,8 @@ const defaultSettings: CrmSettings = {
   ],
   delivery: { enabled: true, baseFee: 4500, freeShippingAbove: 60000, zones: "Chapinero, Usaquén, Teusaquillo" },
   automations: { enabled: true, welcomeOnNewLead: true, deliveryStatusUpdate: true, followUpReminder: true },
-  templates: { newLead: "crm_bienvenida", deliveryUpdate: "crm_estado_delivery" },
+  templates: { newLead: "crm_bienvenida", deliveryUpdate: "crm_estado_delivery", outsideHours: "crm_fuera_horario", handoff: "crm_asesor_humano" },
+  agentPolicy: { enabled: true, timezone: "America/Bogota", opensAt: "08:00", closesAt: "20:00", servesSaturday: true, servesSunday: false, outsideHoursMessage: "Gracias por escribirnos. Nuestro equipo responderá en el próximo horario de atención.", humanHandoffEnabled: true, humanHandoffMessage: "Te pondré en contacto con un asesor del negocio para continuar tu solicitud.", allowPendingCancellation: true, cancellationWindowMinutes: 10 },
 };
 
 const starterOpportunities: SalesOpportunity[] = [
@@ -36,6 +37,7 @@ type CrmContextValue = {
   updateDelivery: (changes: Partial<DeliveryPreferences>) => void;
   updateAutomations: (changes: Partial<CrmAutomationSettings>) => void;
   updateTemplates: (changes: Partial<CrmMessageTemplates>) => void;
+  updateAgentPolicy: (changes: Partial<AgentServicePolicy>) => void;
   createAgentOpportunity: (input: { customerName: string; phone: string; value: number; delivery: boolean; address?: string }) => void;
 };
 
@@ -52,7 +54,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         const saved = await AsyncStorage.getItem(STORAGE_KEY);
         if (!saved) return;
         const parsed = JSON.parse(saved) as { settings?: CrmSettings; opportunities?: SalesOpportunity[] };
-        if (parsed.settings?.stages?.length) setSettings(parsed.settings);
+        if (parsed.settings?.stages?.length) setSettings({ ...defaultSettings, ...parsed.settings, templates: { ...defaultSettings.templates, ...parsed.settings.templates }, agentPolicy: { ...defaultSettings.agentPolicy, ...parsed.settings.agentPolicy } });
         if (parsed.opportunities) setOpportunities(parsed.opportunities);
       } catch {
         // Starter CRM data is intentionally retained when local storage is unavailable.
@@ -108,11 +110,15 @@ export function CrmProvider({ children }: { children: ReactNode }) {
     setSettings((current) => ({ ...current, templates: { ...current.templates, ...changes } }));
   }, []);
 
+  const updateAgentPolicy = useCallback((changes: Partial<AgentServicePolicy>) => {
+    setSettings((current) => ({ ...current, agentPolicy: { ...current.agentPolicy, ...changes } }));
+  }, []);
+
   const createAgentOpportunity = useCallback((input: { customerName: string; phone: string; value: number; delivery: boolean; address?: string }) => {
     setOpportunities((current) => [{ id: `crm-agent-${Date.now()}`, customerName: input.customerName.trim(), phone: input.phone.trim(), stageId: settings.stages.find((stage) => stage.id === "confirmed")?.id ?? settings.stages[0].id, source: "WHATSAPP", value: input.value, lastActivity: "Ahora · Agente", deliveryStatus: input.delivery ? "PENDIENTE" : undefined, address: input.address?.trim() }, ...current]);
   }, [settings.stages]);
 
-  const value = useMemo(() => ({ settings, opportunities, hydrated, moveOpportunity, updateDeliveryStatus, updateStageName, addStage, removeStage, updateDelivery, updateAutomations, updateTemplates, createAgentOpportunity }), [settings, opportunities, hydrated, moveOpportunity, updateDeliveryStatus, updateStageName, addStage, removeStage, updateDelivery, updateAutomations, updateTemplates, createAgentOpportunity]);
+  const value = useMemo(() => ({ settings, opportunities, hydrated, moveOpportunity, updateDeliveryStatus, updateStageName, addStage, removeStage, updateDelivery, updateAutomations, updateTemplates, updateAgentPolicy, createAgentOpportunity }), [settings, opportunities, hydrated, moveOpportunity, updateDeliveryStatus, updateStageName, addStage, removeStage, updateDelivery, updateAutomations, updateTemplates, updateAgentPolicy, createAgentOpportunity]);
 
   return <CrmContext.Provider value={value}>{children}</CrmContext.Provider>;
 }

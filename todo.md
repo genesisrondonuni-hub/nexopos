@@ -78,3 +78,9 @@
 - [x] Implementar un agente Gemini que proponga respuestas y acciones estructuradas para ventas y delivery.
 - [x] Crear la experiencia CRM para atender conversaciones, confirmar pedidos y coordinar delivery con el agente.
 - [x] Validar los flujos del agente para restaurante, comida rápida, supermercado, abasto, bodega y licorería.
+- [x] Preparar un paquete descargable del código fuente y un informe técnico de avances.
+- [x] Configurar horarios de atención y mensajes fuera de horario para el agente comercial.
+- [x] Implementar escalamiento de conversaciones a un asesor humano dentro del CRM.
+- [x] Definir y aplicar una política operativa de cancelación de pedidos gestionados por el agente.
+- [x] Preparar plantillas aprobables y webhooks de Meta WhatsApp para estados de mensajes y delivery.
+- [x] Validar las nuevas políticas de atención, escalamiento, cancelación y webhook antes de activar credenciales.

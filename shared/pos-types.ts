@@ -17,7 +17,7 @@ export interface Product {
   type: "FINAL" | "RECIPE" | "SERVICE";
 }
 
-export type ProductMovementType = "CREACIÓN" | "AJUSTE" | "IMPORTACIÓN" | "REVERSIÓN" | "VENTA_POS" | "VENTA_AGENTE";
+export type ProductMovementType = "CREACIÓN" | "AJUSTE" | "IMPORTACIÓN" | "REVERSIÓN" | "VENTA_POS" | "VENTA_AGENTE" | "CANCELACIÓN";
 
 export interface ProductMovement {
   id: string;
@@ -58,6 +58,9 @@ export interface Order {
   items: CartItem[];
   total: number;
   createdAt: string;
+  createdTimestamp?: number;
+  cancelledAt?: string;
+  cancellationReason?: string;
 }
 
 export interface DailySummary {

@@ -35,6 +35,22 @@ export type CrmAutomationSettings = {
 export type CrmMessageTemplates = {
   newLead: string;
   deliveryUpdate: string;
+  outsideHours: string;
+  handoff: string;
+};
+
+export type AgentServicePolicy = {
+  enabled: boolean;
+  timezone: string;
+  opensAt: string;
+  closesAt: string;
+  servesSaturday: boolean;
+  servesSunday: boolean;
+  outsideHoursMessage: string;
+  humanHandoffEnabled: boolean;
+  humanHandoffMessage: string;
+  allowPendingCancellation: boolean;
+  cancellationWindowMinutes: number;
 };
 
 export type CrmSettings = {
@@ -42,4 +58,5 @@ export type CrmSettings = {
   delivery: DeliveryPreferences;
   automations: CrmAutomationSettings;
   templates: CrmMessageTemplates;
+  agentPolicy: AgentServicePolicy;
 };

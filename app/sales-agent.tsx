@@ -36,7 +36,7 @@ export default function SalesAgentScreen() {
   const askAgent = async () => {
     if (!message.trim()) return;
     try {
-      const result = await agent.mutateAsync({ businessName: configuration.businessName, profileId: profile.id, features: configuration.features, products: availableProducts.map((product) => ({ id: product.id, name: product.name, category: product.category, description: product.description, price: product.price, stock: product.stock, code: product.code })), customerMessage: message.trim() });
+      const result = await agent.mutateAsync({ businessName: configuration.businessName, profileId: profile.id, features: configuration.features, agentPolicy: settings.agentPolicy, products: availableProducts.map((product) => ({ id: product.id, name: product.name, category: product.category, description: product.description, price: product.price, stock: product.stock, code: product.code })), customerMessage: message.trim() });
       setReply(result.reply); setMode(result.mode); setDraft(result.reply.proposals); if (result.reply.delivery === "DELIVERY" && canDeliver) setDelivery("Domicilio");
     } catch {
       Alert.alert("No fue posible responder", "Intenta de nuevo. El agente solo puede usar productos disponibles y datos verificados del negocio.");

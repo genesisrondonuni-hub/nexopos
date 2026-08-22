@@ -4,7 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as nexo from "./nexo-store";
-import { buildMetaTemplatePayload, getMetaWhatsAppStatus, sendMetaTemplate } from "./meta-whatsapp";
+import { buildMetaTemplatePayload, getMetaWebhookEvents, getMetaWhatsAppStatus, sendMetaTemplate } from "./meta-whatsapp";
 import { analyzeBusiness, getGeminiStatus } from "./gemini";
 import { respondWithSalesAgent } from "./sales-agent";
 import { completeGoogleSheetsAuthorization, getGoogleSheetsStatus, readGoogleSheetValues, startGoogleSheetsAuthorization } from "./google-sheets";
@@ -67,6 +67,7 @@ export const appRouter = router({
   }),
   crm: router({
     metaStatus: publicProcedure.query(() => getMetaWhatsAppStatus()),
+    webhookEvents: publicProcedure.query(() => getMetaWebhookEvents()),
     previewTemplate: publicProcedure.input(z.object({
       to: z.string().min(8).max(30),
       templateName: z.string().min(1).max(512),
@@ -93,6 +94,7 @@ export const appRouter = router({
       businessName: z.string().min(1).max(120),
       profileId: z.enum(["RESTAURANT", "FAST_FOOD", "SUPERMARKET", "GROCERY", "WAREHOUSE", "LIQUOR_STORE"]),
       features: z.object({ recipes: z.boolean(), tables: z.boolean(), barcode: z.boolean(), wholesalePricing: z.boolean(), delivery: z.boolean(), catalog: z.boolean(), ageCheck: z.boolean(), weightedProducts: z.boolean() }),
+      agentPolicy: z.object({ enabled: z.boolean(), timezone: z.string().min(1).max(80), opensAt: z.string().regex(/^\d{2}:\d{2}$/), closesAt: z.string().regex(/^\d{2}:\d{2}$/), servesSaturday: z.boolean(), servesSunday: z.boolean(), outsideHoursMessage: z.string().min(1).max(500), humanHandoffEnabled: z.boolean(), humanHandoffMessage: z.string().min(1).max(500), allowPendingCancellation: z.boolean(), cancellationWindowMinutes: z.number().int().min(0).max(1440) }),
       products: z.array(z.object({ id: z.string().min(1), name: z.string().min(1).max(120), category: z.string().min(1).max(80), description: z.string().max(500), price: z.number().nonnegative(), stock: z.number().nonnegative(), code: z.string().min(1).max(40) })).max(500),
       customerMessage: z.string().trim().min(1).max(2000),
     })).mutation(({ input }) => respondWithSalesAgent(input)),

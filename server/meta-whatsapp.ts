@@ -1,3 +1,5 @@
+import { createHmac, timingSafeEqual } from "crypto";
+
 type MetaTemplateInput = {
   to: string;
   templateName: string;
@@ -23,7 +25,7 @@ function normalizePhone(value: string) {
 
 export function getMetaWhatsAppStatus() {
   const sendReady = Boolean(process.env.META_WHATSAPP_ACCESS_TOKEN?.trim() && process.env.META_WHATSAPP_PHONE_NUMBER_ID?.trim());
-  const webhookReady = Boolean(process.env.META_WHATSAPP_WABA_ID?.trim() && process.env.META_WEBHOOK_VERIFY_TOKEN?.trim());
+  const webhookReady = Boolean(process.env.META_WHATSAPP_WABA_ID?.trim() && process.env.META_WEBHOOK_VERIFY_TOKEN?.trim() && process.env.META_APP_SECRET?.trim());
   return {
     configured: sendReady,
     sendReady,
@@ -32,6 +34,40 @@ export function getMetaWhatsAppStatus() {
     message: sendReady ? webhookReady ? "Envío y verificación de webhook configurados." : "El envío de plantillas está listo; falta completar el webhook de estados." : "Pendiente de token de acceso y Phone Number ID de Meta.",
   };
 }
+
+export type MetaWebhookEvent = { id: string; kind: "MENSAJE" | "ESTADO" | "OTRO"; from?: string; detail: string; receivedAt: string };
+const webhookEvents: MetaWebhookEvent[] = [];
+
+export function verifyMetaWebhookChallenge(input: { mode?: string; verifyToken?: string; challenge?: string }) {
+  const expected = process.env.META_WEBHOOK_VERIFY_TOKEN?.trim();
+  if (!expected || input.mode !== "subscribe" || !input.verifyToken || input.verifyToken !== expected) return null;
+  return input.challenge ?? null;
+}
+
+export function isValidMetaWebhookSignature(rawBody: Buffer, signature?: string) {
+  const secret = process.env.META_APP_SECRET?.trim();
+  if (!secret || !signature?.startsWith("sha256=")) return false;
+  const expected = `sha256=${createHmac("sha256", secret).update(rawBody).digest("hex")}`;
+  const supplied = signature.trim();
+  return expected.length === supplied.length && timingSafeEqual(Buffer.from(expected), Buffer.from(supplied));
+}
+
+type MetaWebhookValue = { messages?: Array<{ from?: string; text?: { body?: string }; type?: string }>; statuses?: Array<{ recipient_id?: string; status?: string }> };
+type MetaWebhookPayload = { entry?: Array<{ changes?: Array<{ value?: MetaWebhookValue }> }> };
+
+export function captureMetaWebhookPayload(payload: unknown) {
+  const records: MetaWebhookEvent[] = [];
+  const entries = typeof payload === "object" && payload ? (payload as MetaWebhookPayload).entry ?? [] : [];
+  entries.forEach((entry) => entry.changes?.forEach((change) => {
+    change.value?.messages?.forEach((message, index) => records.push({ id: `meta-msg-${Date.now()}-${index}`, kind: "MENSAJE", from: message.from, detail: message.text?.body?.slice(0, 300) ?? message.type ?? "Mensaje recibido", receivedAt: new Date().toISOString() }));
+    change.value?.statuses?.forEach((status, index) => records.push({ id: `meta-status-${Date.now()}-${index}`, kind: "ESTADO", from: status.recipient_id, detail: status.status ?? "Estado actualizado", receivedAt: new Date().toISOString() }));
+  }));
+  webhookEvents.unshift(...records);
+  webhookEvents.splice(100);
+  return records;
+}
+
+export function getMetaWebhookEvents() { return [...webhookEvents]; }
 
 export function buildMetaTemplatePayload(input: MetaTemplateInput): MetaTemplatePayload {
   const phone = normalizePhone(input.to);
