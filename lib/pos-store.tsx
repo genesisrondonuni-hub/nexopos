@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 
 import { DEFAULT_SHOP_WHATSAPP_NUMBER, isValidWhatsAppNumber, normalizeWhatsAppNumber } from "@/lib/whatsapp";
 import type { CartItem, DailySummary, Order, OrderStatus, PaymentSplit, Product } from "@/shared/pos-types";
-import type { ImportedInventoryProduct } from "@/shared/inventory-import";
+import { applyInventoryImport, revertInventoryImport, type ImportedInventoryProduct, type InventoryImportRecord } from "@/shared/inventory-import";
 
 const starterProducts: Product[] = [
   { id: "p-arepa", name: "Arepa de queso", category: "Entradas", price: 8500, cost: 2900, stock: 32, minStock: 10, showInCatalog: true, type: "FINAL" },
@@ -99,7 +99,9 @@ type NexoContextValue = {
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   toggleCatalog: (productId: string) => void;
   updateProductCategory: (productId: string, category: string) => void;
-  upsertImportedProducts: (products: ImportedInventoryProduct[]) => { created: number; updated: number };
+  upsertImportedProducts: (products: ImportedInventoryProduct[], source?: string) => { created: number; updated: number; importId: string };
+  importHistory: InventoryImportRecord[];
+  revertImport: (importId: string) => { reverted: boolean; reason?: string };
   hydrated: boolean;
 };
 
@@ -112,6 +114,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
   const [catalogCart, setCatalogCart] = useState<CartItem[]>([]);
   const [businessSettings, setBusinessSettings] = useState<BusinessSettings>({ whatsappNumber: DEFAULT_SHOP_WHATSAPP_NUMBER });
   const [summary, setSummary] = useState<DailySummary>({ sales: 1284400, expenses: 342800, profit: 941600, orders: 48 });
+  const [importHistory, setImportHistory] = useState<InventoryImportRecord[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -119,13 +122,14 @@ export function NexoProvider({ children }: { children: ReactNode }) {
       try {
         const saved = await AsyncStorage.getItem(STORAGE_KEY);
         if (!saved) return;
-        const state = JSON.parse(saved) as { products?: Product[]; orders?: Order[]; summary?: DailySummary; businessSettings?: BusinessSettings };
+        const state = JSON.parse(saved) as { products?: Product[]; orders?: Order[]; summary?: DailySummary; businessSettings?: BusinessSettings; importHistory?: InventoryImportRecord[] };
         if (state.products) setProducts(state.products);
         if (state.orders) setOrders(state.orders);
         if (state.summary) setSummary(state.summary);
         if (state.businessSettings && isValidWhatsAppNumber(state.businessSettings.whatsappNumber)) {
           setBusinessSettings({ whatsappNumber: normalizeWhatsAppNumber(state.businessSettings.whatsappNumber) });
         }
+        if (state.importHistory) setImportHistory(state.importHistory);
       } catch {
         // The starter data remains available when local data cannot be restored.
       } finally {
@@ -137,8 +141,8 @@ export function NexoProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ products, orders, summary, businessSettings }));
-  }, [hydrated, products, orders, summary, businessSettings]);
+    void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ products, orders, summary, businessSettings, importHistory }));
+  }, [hydrated, products, orders, summary, businessSettings, importHistory]);
 
   const addToCart = useCallback((product: Product) => {
     if (product.stock <= 0) return;
@@ -245,27 +249,24 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     setProducts((current) => current.map((product) => product.id === productId ? { ...product, category: normalized } : product));
   }, []);
 
-  const upsertImportedProducts = useCallback((importedProducts: ImportedInventoryProduct[]) => {
-    let created = 0;
-    let updated = 0;
-    setProducts((current) => {
-      const next = [...current];
-      importedProducts.forEach((item, index) => {
-        const existingIndex = next.findIndex((product) => product.name.toLocaleLowerCase() === item.name.toLocaleLowerCase());
-        if (existingIndex >= 0) {
-          updated += 1;
-          next[existingIndex] = { ...next[existingIndex], ...item };
-        } else {
-          created += 1;
-          next.push({ ...item, id: `import-${Date.now()}-${index}`, type: "FINAL" });
-        }
-      });
-      return next;
-    });
-    return { created, updated };
-  }, []);
+  const upsertImportedProducts = useCallback((importedProducts: ImportedInventoryProduct[], source = "Archivo") => {
+    const result = applyInventoryImport(products, importedProducts, source);
+    setProducts(result.products);
+    setImportHistory((current) => [result.record, ...current].slice(0, 30));
+    return { created: result.record.created, updated: result.record.updated, importId: result.record.id };
+  }, [products]);
 
-  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, upsertImportedProducts, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, upsertImportedProducts, hydrated]);
+  const revertImport = useCallback((importId: string) => {
+    const record = importHistory.find((entry) => entry.id === importId);
+    if (!record) return { reverted: false, reason: "No encontramos este registro de importación." };
+    const result = revertInventoryImport(products, record);
+    if (!result.reverted) return result;
+    setProducts(result.products);
+    setImportHistory((current) => current.filter((entry) => entry.id !== importId));
+    return { reverted: true };
+  }, [importHistory, products]);
+
+  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, importHistory, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, upsertImportedProducts, revertImport, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, importHistory, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, upsertImportedProducts, revertImport, hydrated]);
 
   return <NexoContext.Provider value={value}>{children}</NexoContext.Provider>;
 }

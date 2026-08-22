@@ -99,8 +99,10 @@ export default function RootLayout() {
                   <Stack.Screen name="business-profile" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="product-categories" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="inventory-import" options={{ presentation: "formSheet" }} />
+                  <Stack.Screen name="inventory-import-history" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="gemini-settings" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="api-integrations" options={{ presentation: "formSheet" }} />
+                  <Stack.Screen name="google-sheets-settings" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="crm-settings" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="oauth/callback" />
                   </Stack>

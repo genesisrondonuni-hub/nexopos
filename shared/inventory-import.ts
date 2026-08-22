@@ -1,3 +1,5 @@
+import type { Product } from "./pos-types";
+
 export type ImportedInventoryProduct = {
   name: string;
   category: string;
@@ -10,6 +12,50 @@ export type ImportedInventoryProduct = {
 
 export type ImportIssue = { row: number; message: string; severity: "warning" | "error" };
 export type InventoryImportPreview = { products: ImportedInventoryProduct[]; issues: ImportIssue[]; duplicateCount: number };
+
+export type InventoryImportChange = { productId: string; before?: Product; after: Product };
+export type InventoryImportRecord = {
+  id: string;
+  source: string;
+  createdAt: string;
+  changes: InventoryImportChange[];
+  created: number;
+  updated: number;
+};
+
+export function applyInventoryImport(current: Product[], importedProducts: ImportedInventoryProduct[], source: string, timestamp = Date.now()) {
+  const next = [...current];
+  const changes: InventoryImportChange[] = [];
+  let created = 0;
+  let updated = 0;
+  importedProducts.forEach((item, index) => {
+    const existingIndex = next.findIndex((product) => product.name.toLocaleLowerCase() === item.name.toLocaleLowerCase());
+    if (existingIndex >= 0) {
+      const before = next[existingIndex];
+      const after = { ...before, ...item };
+      next[existingIndex] = after;
+      changes.push({ productId: before.id, before, after });
+      updated += 1;
+    } else {
+      const after: Product = { ...item, id: `import-${timestamp}-${index}`, type: "FINAL" };
+      next.push(after);
+      changes.push({ productId: after.id, after });
+      created += 1;
+    }
+  });
+  return { products: next, record: { id: `imp-${timestamp}`, source, createdAt: new Date(timestamp).toISOString(), changes, created, updated } satisfies InventoryImportRecord };
+}
+
+export function revertInventoryImport(current: Product[], record: InventoryImportRecord) {
+  const hasConflict = record.changes.some((change) => {
+    const product = current.find((entry) => entry.id === change.productId);
+    return !product || JSON.stringify(product) !== JSON.stringify(change.after);
+  });
+  if (hasConflict) return { products: current, reverted: false, reason: "El inventario cambió después de esta importación; no es seguro revertirla automáticamente." };
+  const createdIds = new Set(record.changes.filter((change) => !change.before).map((change) => change.productId));
+  const previousById = new Map(record.changes.filter((change) => change.before).map((change) => [change.productId, change.before!]));
+  return { products: current.filter((product) => !createdIds.has(product.id)).map((product) => previousById.get(product.id) ?? product), reverted: true as const };
+}
 
 const headerAliases: Record<string, keyof ImportedInventoryProduct> = {
   nombre: "name", name: "name", producto: "name", product: "name",

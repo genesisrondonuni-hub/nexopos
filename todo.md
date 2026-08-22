@@ -46,3 +46,11 @@
 - [x] Implementar un centro de integraciones para configurar Gemini, modelos y estados operativos.
 - [x] Conectar la configuración de Gemini al análisis de inventario, ventas y CRM sin exponer la clave.
 - [ ] Validar el centro de integraciones y los flujos de configuración segura.
+- [x] Definir los datos de auditoría y las reglas de reversión segura de cada importación.
+- [x] Implementar historial de importaciones con detalle y reversión de inventario.
+- [ ] Configurar OAuth de Google para importar hojas privadas del administrador.
+- [ ] Integrar la selección de hojas privadas y aplicar su vista previa al inventario.
+- [ ] Activar Gemini con una clave válida y verificar análisis reales de inventario, ventas y CRM.
+- [ ] Validar el historial, OAuth de Sheets y Gemini de extremo a extremo.
+- [x] Priorizar el historial y la reversión de importaciones antes de completar OAuth de Google Sheets privadas.
+- [x] Preparar la pantalla y los parámetros administrativos para OAuth de Google Sheets privadas.

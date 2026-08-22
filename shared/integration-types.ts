@@ -6,8 +6,14 @@ export type GeminiIntegrationSettings = {
   analyzeCrm: boolean;
 };
 
+export type GoogleSheetsIntegrationSettings = {
+  spreadsheetId: string;
+  sheetName: string;
+};
+
 export type IntegrationSettings = {
   gemini: GeminiIntegrationSettings;
+  googleSheets: GoogleSheetsIntegrationSettings;
 };
 
 export const defaultIntegrationSettings: IntegrationSettings = {
@@ -17,5 +23,9 @@ export const defaultIntegrationSettings: IntegrationSettings = {
     analyzeInventory: true,
     analyzeSales: true,
     analyzeCrm: true,
+  },
+  googleSheets: {
+    spreadsheetId: "",
+    sheetName: "Hoja 1",
   },
 };
