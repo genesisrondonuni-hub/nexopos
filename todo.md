@@ -112,4 +112,4 @@
 - [x] Añadir reportes de desempeño por sede y colección.
 - [x] Incorporar métricas de productos más vendidos, menos vendidos, con pérdida y candidatos a retiro.
 - [x] Validar cálculos de analítica comercial, tipado y pruebas automatizadas.
-- [ ] Publicar la versión validada de NexoPOS en un repositorio privado de GitHub.
+- [x] Publicar la versión validada de NexoPOS en un repositorio privado de GitHub.
