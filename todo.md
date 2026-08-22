@@ -126,3 +126,5 @@
 - [x] Reiniciar y comprobar el servidor de desarrollo tras la interrupción reportada.
 - [x] Analizar el contenido adjunto y seleccionar mejoras de experiencia comercial de alto valor.
 - [x] Implementar y validar las mejoras priorizadas a partir del contenido adjunto.
+- [x] Priorizar mejoras compatibles del análisis arquitectónico sin migrar la aplicación móvil a una web PWA.
+- [x] Implementar y validar las mejoras operativas seleccionadas del análisis arquitectónico.
