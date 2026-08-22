@@ -113,3 +113,9 @@
 - [x] Incorporar métricas de productos más vendidos, menos vendidos, con pérdida y candidatos a retiro.
 - [x] Validar cálculos de analítica comercial, tipado y pruebas automatizadas.
 - [x] Publicar la versión validada de NexoPOS en un repositorio privado de GitHub.
+- [x] Añadir filtros por rango de fechas al análisis comercial.
+- [x] Permitir exportar el reporte comercial a Excel.
+- [ ] Configurar las credenciales y activación real de Meta WhatsApp cuando el administrador lo autorice.
+- [ ] Validar y sincronizar las nuevas recomendaciones comerciales con GitHub.
+- [x] Contextualizar los productos, servicios, pedidos y citas de ejemplo para cada tipo de comercio.
+- [x] Validar los datos de ejemplo por perfil y sincronizarlos con GitHub.

@@ -25,10 +25,13 @@ export type BusinessStarterItem = {
   name: string;
   description: string;
   category: string;
-  type: "FINAL" | "SERVICE";
+  type: "FINAL" | "RECIPE" | "SERVICE";
   price?: number;
   cost?: number;
   stock?: number;
+  collection?: string;
+  colors?: string[];
+  sizes?: string[];
 };
 
 export type BusinessProfileDefinition = {

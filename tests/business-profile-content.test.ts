@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getProfileCopy, getProfileStarterCatalog } from "../shared/business-profile-content";
+import { BUSINESS_PROFILES } from "../lib/business-store";
 
 describe("contenido inicial por perfil", () => {
   it("provee un catálogo de servicios administrativo y seguro para consultorio médico", () => {
@@ -19,5 +20,12 @@ describe("contenido inicial por perfil", () => {
     const catalog = getProfileStarterCatalog("CLOTHING_STORE");
     expect(catalog.some((item) => item.name === "Camiseta básica" && item.price && item.stock)).toBe(true);
     expect(getProfileCopy("CLOTHING_STORE").agentWelcome).toContain("prenda");
+  });
+
+  it("ofrece un catálogo contextualizado para cada perfil de comercio", () => {
+    BUSINESS_PROFILES.forEach((profile) => {
+      expect(getProfileStarterCatalog(profile.id).length).toBeGreaterThanOrEqual(3);
+      expect(getProfileCopy(profile.id).catalogGreeting.length).toBeGreaterThan(20);
+    });
   });
 });

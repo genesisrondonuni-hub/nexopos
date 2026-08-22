@@ -14,6 +14,8 @@ export type SalesOpportunity = {
   source: "CATÁLOGO" | "WHATSAPP" | "PRESENCIAL";
   value: number;
   lastActivity: string;
+  subject?: string;
+  appointmentAt?: string;
   deliveryStatus?: DeliveryStatus;
   address?: string;
 };

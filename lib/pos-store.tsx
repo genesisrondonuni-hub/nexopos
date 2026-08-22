@@ -5,62 +5,12 @@ import { DEFAULT_SHOP_WHATSAPP_NUMBER, isValidWhatsAppNumber, normalizeWhatsAppN
 import type { CartItem, DailySummary, Order, OrderStatus, PaymentSplit, Product, ProductMovement } from "@/shared/pos-types";
 import { applyInventoryImport, revertInventoryImport, type ImportedInventoryProduct, type InventoryImportRecord } from "@/shared/inventory-import";
 import { createProductCode, getBarcodeValidation, isValidProductCode, normalizeProductCode } from "@/shared/product-code";
+import { getProfileDemoData, isDemoOrderId, isDemoProductId } from "@/shared/business-profile-demo";
+import type { BusinessProfileId } from "@/shared/business-types";
 
-const starterProducts: Product[] = [
-  { id: "p-arepa", code: "SKU-AREPA-001", name: "Arepa de queso", description: "Arepa artesanal rellena de queso.", category: "Entradas", price: 8500, cost: 2900, stock: 32, minStock: 10, showInCatalog: true, type: "FINAL" },
-  { id: "p-bowl", code: "SKU-BOWL-002", name: "Bowl campesino", description: "Bowl caliente con ingredientes del día.", category: "Platos", price: 21500, cost: 8200, stock: 14, minStock: 8, showInCatalog: true, type: "RECIPE" },
-  { id: "p-hamb", code: "SKU-HAMB-003", name: "Hamburguesa Nexo", description: "Hamburguesa de la casa con acompañamiento.", category: "Platos", price: 26900, cost: 10600, stock: 8, minStock: 8, showInCatalog: true, type: "RECIPE" },
-  { id: "p-limo", code: "SKU-LIMO-004", name: "Limonada natural", description: "Limonada fresca preparada al momento.", category: "Bebidas", price: 7500, cost: 1800, stock: 28, minStock: 10, showInCatalog: true, type: "FINAL" },
-  { id: "p-cafe", code: "SKU-CAFE-005", name: "Café americano", description: "Café americano de tostión media.", category: "Bebidas", price: 5200, cost: 900, stock: 45, minStock: 12, showInCatalog: true, type: "FINAL" },
-  { id: "p-postre", code: "SKU-TORTA-006", name: "Torta de chocolate", description: "Porción de torta de chocolate artesanal.", category: "Postres", price: 9800, cost: 3400, stock: 6, minStock: 6, showInCatalog: false, type: "FINAL" },
-];
-
-const starterOrders: Order[] = [
-  {
-    id: "o-1048",
-    code: "#1048",
-    customerName: "Valentina Ruiz",
-    customerPhone: "300 555 0183",
-    status: "PENDIENTE",
-    source: "CATÁLOGO",
-    delivery: "Domicilio",
-    total: 34400,
-    createdAt: "Hace 6 min",
-    items: [
-      { id: "i-1", name: "Bowl campesino", quantity: 1, unitPrice: 21500, isFreeSale: false },
-      { id: "i-2", name: "Limonada natural", quantity: 1, unitPrice: 7500, isFreeSale: false },
-      { id: "i-3", name: "Empaque", quantity: 1, unitPrice: 5400, isFreeSale: true },
-    ],
-  },
-  {
-    id: "o-1047",
-    code: "#1047",
-    customerName: "Mesa 04",
-    status: "EN PROCESO",
-    source: "POS",
-    delivery: "Mesa",
-    total: 53800,
-    createdAt: "Hace 14 min",
-    items: [
-      { id: "i-4", name: "Hamburguesa Nexo", quantity: 2, unitPrice: 26900, isFreeSale: false },
-    ],
-  },
-  {
-    id: "o-1046",
-    code: "#1046",
-    customerName: "Camilo Pérez",
-    customerPhone: "301 212 4208",
-    status: "PAGADO",
-    source: "CATÁLOGO",
-    delivery: "Recogida",
-    total: 20200,
-    createdAt: "Hace 28 min",
-    items: [
-      { id: "i-5", name: "Arepa de queso", quantity: 2, unitPrice: 8500, isFreeSale: false },
-      { id: "i-6", name: "Café americano", quantity: 1, unitPrice: 3200, isFreeSale: false },
-    ],
-  },
-];
+const restaurantDemo = getProfileDemoData("RESTAURANT");
+const starterProducts: Product[] = restaurantDemo.products;
+const starterOrders: Order[] = restaurantDemo.orders;
 
 const STORAGE_KEY = "@nexopos:operacion:v1";
 
@@ -120,6 +70,7 @@ type NexoContextValue = {
   importHistory: InventoryImportRecord[];
   productMovements: ProductMovement[];
   revertImport: (importId: string) => { reverted: boolean; reason?: string };
+  replaceProfileDemo: (profileId: BusinessProfileId) => { products: number; orders: number };
   hydrated: boolean;
 };
 
@@ -131,7 +82,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [catalogCart, setCatalogCart] = useState<CartItem[]>([]);
   const [businessSettings, setBusinessSettings] = useState<BusinessSettings>({ whatsappNumber: DEFAULT_SHOP_WHATSAPP_NUMBER, activeBranchId: "main" });
-  const [summary, setSummary] = useState<DailySummary>({ sales: 1284400, expenses: 342800, profit: 941600, orders: 48 });
+  const [summary, setSummary] = useState<DailySummary>({ sales: restaurantDemo.sales, expenses: 0, profit: restaurantDemo.profit, orders: restaurantDemo.orders.length });
   const [importHistory, setImportHistory] = useState<InventoryImportRecord[]>([]);
   const [productMovements, setProductMovements] = useState<ProductMovement[]>([]);
   const [hydrated, setHydrated] = useState(false);
@@ -382,7 +333,17 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     return { reverted: true };
   }, [importHistory, products]);
 
-  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, hydrated]);
+  const replaceProfileDemo = useCallback((profileId: BusinessProfileId) => {
+    const demo = getProfileDemoData(profileId);
+    setProducts((current) => [...current.filter((product) => !isDemoProductId(product.id)), ...demo.products]);
+    setOrders((current) => [...current.filter((order) => !isDemoOrderId(order.id)), ...demo.orders]);
+    setProductMovements((current) => current.filter((movement) => !isDemoProductId(movement.productId)));
+    setCart([]);
+    setCatalogCart([]);
+    return { products: demo.products.length, orders: demo.orders.length };
+  }, []);
+
+  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, replaceProfileDemo, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, replaceProfileDemo, hydrated]);
 
   return <NexoContext.Provider value={value}>{children}</NexoContext.Provider>;
 }

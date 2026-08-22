@@ -39,10 +39,14 @@ export type SalesAnalytics = {
   collections: SalesGroupMetric[];
 };
 
+export type SalesAnalyticsRange = "ALL" | "7D" | "30D" | "90D";
+
 type BuildSalesAnalyticsInput = {
   products: Product[];
   orders: Order[];
   branches?: BranchSchedule[];
+  range?: SalesAnalyticsRange;
+  now?: number;
 };
 
 const emptyGroup = (id: string, name: string): SalesGroupMetric => ({ id, name, orders: 0, revenue: 0, costOfSales: 0, grossProfit: 0 });
@@ -54,8 +58,10 @@ function addGroupLine(group: SalesGroupMetric, revenue: number, cost: number) {
 }
 
 /** Crea métricas usando pedidos no anulados y conserva el costo histórico cuando existe. */
-export function buildSalesAnalytics({ products, orders, branches = [] }: BuildSalesAnalyticsInput): SalesAnalytics {
-  const activeOrders = orders.filter((order) => order.status !== "ARCHIVADO");
+export function buildSalesAnalytics({ products, orders, branches = [], range = "ALL", now = Date.now() }: BuildSalesAnalyticsInput): SalesAnalytics {
+  const rangeDays = range === "7D" ? 7 : range === "30D" ? 30 : range === "90D" ? 90 : undefined;
+  const threshold = rangeDays ? now - rangeDays * 24 * 60 * 60 * 1000 : undefined;
+  const activeOrders = orders.filter((order) => order.status !== "ARCHIVADO" && (!threshold || (order.createdTimestamp ?? 0) >= threshold));
   const productById = new Map(products.map((product) => [product.id, product]));
   const salesByProduct = new Map<string, { unitsSold: number; revenue: number; costOfSales: number }>();
   const branchNames = new Map(branches.map((branch) => [branch.id, branch.name]));

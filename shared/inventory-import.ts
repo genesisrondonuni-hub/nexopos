@@ -12,6 +12,9 @@ export type ImportedInventoryProduct = {
   minStock: number;
   showInCatalog: boolean;
   type?: Product["type"];
+  collection?: string;
+  colors?: string[];
+  sizes?: string[];
 };
 
 export type ImportIssue = { row: number; message: string; severity: "warning" | "error" };

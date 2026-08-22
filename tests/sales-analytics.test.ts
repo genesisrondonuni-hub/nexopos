@@ -29,4 +29,12 @@ describe("buildSalesAnalytics", () => {
     expect(analytics.lossProducts.some((metric) => metric.name === "Pantalón")).toBe(true);
     expect(analytics.exitCandidates.find((metric) => metric.name === "Accesorio")?.retirementReason).toContain("Sin ventas");
   });
+
+  it("filtra las ventas usando el rango temporal seleccionado", () => {
+    const now = 1_800_000_000_000;
+    const datedOrders = [{ ...orders[0], createdTimestamp: now - 2 * 24 * 60 * 60 * 1000 }, { ...orders[1], id: "o3", status: "PAGADO" as const, createdTimestamp: now - 45 * 24 * 60 * 60 * 1000 }];
+    expect(buildSalesAnalytics({ products, orders: datedOrders, range: "7D", now }).activeOrders).toBe(1);
+    expect(buildSalesAnalytics({ products, orders: datedOrders, range: "30D", now }).activeOrders).toBe(1);
+    expect(buildSalesAnalytics({ products, orders: datedOrders, range: "90D", now }).activeOrders).toBe(2);
+  });
 });

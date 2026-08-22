@@ -2,6 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import type { AgentServicePolicy, BranchSchedule, CrmAutomationSettings, CrmMessageTemplates, CrmSettings, DeliveryPreferences, DeliveryStatus, SalesOpportunity } from "@/shared/crm-types";
+import { getProfileDemoOpportunities, isDemoOpportunityId } from "@/shared/business-profile-demo";
+import type { BusinessProfileId } from "@/shared/business-types";
 
 const STORAGE_KEY = "@nexopos:crm:v1";
 
@@ -19,12 +21,7 @@ const defaultSettings: CrmSettings = {
   branches: [{ id: "main", name: "Sede principal", opensAt: "08:00", closesAt: "20:00", servesSaturday: true, servesSunday: false }],
 };
 
-const starterOpportunities: SalesOpportunity[] = [
-  { id: "crm-001", customerName: "Laura Gómez", phone: "300 555 0183", stageId: "lead", source: "CATÁLOGO", value: 34400, lastActivity: "Hace 4 min", deliveryStatus: "PENDIENTE", address: "Calle 72 # 12-34" },
-  { id: "crm-002", customerName: "Mateo Rojas", phone: "301 202 1147", stageId: "contacted", source: "WHATSAPP", value: 53800, lastActivity: "Hace 16 min", deliveryStatus: "EN RUTA", address: "Cra. 15 # 85-22" },
-  { id: "crm-003", customerName: "Sofía Martínez", phone: "315 881 6712", stageId: "confirmed", source: "CATÁLOGO", value: 21500, lastActivity: "Hace 28 min", deliveryStatus: "PENDIENTE", address: "Recogida en tienda" },
-  { id: "crm-004", customerName: "Carlos Vera", phone: "316 410 2981", stageId: "won", source: "PRESENCIAL", value: 42700, lastActivity: "Hoy, 10:12 a. m." },
-];
+const starterOpportunities: SalesOpportunity[] = getProfileDemoOpportunities("RESTAURANT");
 
 type CrmContextValue = {
   settings: CrmSettings;
@@ -41,6 +38,7 @@ type CrmContextValue = {
   updateAgentPolicy: (changes: Partial<AgentServicePolicy>) => void;
   updateBranchSchedule: (branchId: string, changes: Partial<BranchSchedule>) => void;
   addBranchSchedule: () => void;
+  replaceProfileDemo: (profileId: BusinessProfileId) => number;
   createAgentOpportunity: (input: { customerName: string; phone: string; value: number; delivery: boolean; address?: string }) => void;
 };
 
@@ -125,11 +123,17 @@ export function CrmProvider({ children }: { children: ReactNode }) {
     setSettings((current) => ({ ...current, branches: [...current.branches, { id: `branch-${Date.now()}`, name: `Sede ${current.branches.length + 1}`, opensAt: current.agentPolicy.opensAt, closesAt: current.agentPolicy.closesAt, servesSaturday: current.agentPolicy.servesSaturday, servesSunday: current.agentPolicy.servesSunday }] }));
   }, []);
 
+  const replaceProfileDemo = useCallback((profileId: BusinessProfileId) => {
+    const examples = getProfileDemoOpportunities(profileId);
+    setOpportunities((current) => [...current.filter((opportunity) => !isDemoOpportunityId(opportunity.id)), ...examples]);
+    return examples.length;
+  }, []);
+
   const createAgentOpportunity = useCallback((input: { customerName: string; phone: string; value: number; delivery: boolean; address?: string }) => {
     setOpportunities((current) => [{ id: `crm-agent-${Date.now()}`, customerName: input.customerName.trim(), phone: input.phone.trim(), stageId: settings.stages.find((stage) => stage.id === "confirmed")?.id ?? settings.stages[0].id, source: "WHATSAPP", value: input.value, lastActivity: "Ahora · Agente", deliveryStatus: input.delivery ? "PENDIENTE" : undefined, address: input.address?.trim() }, ...current]);
   }, [settings.stages]);
 
-  const value = useMemo(() => ({ settings, opportunities, hydrated, moveOpportunity, updateDeliveryStatus, updateStageName, addStage, removeStage, updateDelivery, updateAutomations, updateTemplates, updateAgentPolicy, updateBranchSchedule, addBranchSchedule, createAgentOpportunity }), [settings, opportunities, hydrated, moveOpportunity, updateDeliveryStatus, updateStageName, addStage, removeStage, updateDelivery, updateAutomations, updateTemplates, updateAgentPolicy, updateBranchSchedule, addBranchSchedule, createAgentOpportunity]);
+  const value = useMemo(() => ({ settings, opportunities, hydrated, moveOpportunity, updateDeliveryStatus, updateStageName, addStage, removeStage, updateDelivery, updateAutomations, updateTemplates, updateAgentPolicy, updateBranchSchedule, addBranchSchedule, replaceProfileDemo, createAgentOpportunity }), [settings, opportunities, hydrated, moveOpportunity, updateDeliveryStatus, updateStageName, addStage, removeStage, updateDelivery, updateAutomations, updateTemplates, updateAgentPolicy, updateBranchSchedule, addBranchSchedule, replaceProfileDemo, createAgentOpportunity]);
 
   return <CrmContext.Provider value={value}>{children}</CrmContext.Provider>;
 }
