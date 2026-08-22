@@ -8,7 +8,11 @@ export interface Product {
   name: string;
   description: string;
   imageUri?: string;
+  galleryImageUris?: string[];
   category: ProductCategory;
+  collection?: string;
+  colors?: string[];
+  sizes?: string[];
   price: number;
   cost: number;
   stock: number;
@@ -36,6 +40,8 @@ export interface CartItem {
   name: string;
   quantity: number;
   unitPrice: number;
+  unitCost?: number;
+  collection?: string;
   isFreeSale: boolean;
 }
 
@@ -55,6 +61,7 @@ export interface Order {
   delivery: "Mesa" | "Recogida" | "Domicilio";
   deliveryAddress?: string;
   deliveryFee?: number;
+  branchId?: string;
   items: CartItem[];
   total: number;
   createdAt: string;

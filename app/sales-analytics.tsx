@@ -1,0 +1,50 @@
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { router } from "expo-router";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+
+import { Card, colors, formatCOP, MetricCard } from "@/components/nexo-ui";
+import { ScreenContainer } from "@/components/screen-container";
+import { useCrm } from "@/lib/crm-store";
+import { useNexo } from "@/lib/pos-store";
+import type { ProductSalesMetric, SalesGroupMetric } from "@/shared/sales-analytics";
+import { buildSalesAnalytics } from "@/shared/sales-analytics";
+
+type ReportRow = { kind: "section"; id: string; title: string; subtitle?: string } | { kind: "product"; id: string; title: string; detail: string; value: string; tone: "green" | "gold" | "coral" | "ink"; icon: keyof typeof MaterialIcons.glyphMap } | { kind: "group"; id: string; title: string; detail: string; value: string; icon: keyof typeof MaterialIcons.glyphMap };
+
+function productRow(metric: ProductSalesMetric, type: "TOP" | "LOW" | "LOSS" | "EXIT"): Extract<ReportRow, { kind: "product" }> {
+  if (type === "TOP") return { kind: "product", id: `top-${metric.productId}`, title: metric.name, detail: `${metric.unitsSold} unidades · ${metric.collection}`, value: formatCOP(metric.revenue), tone: "green", icon: "trending-up" };
+  if (type === "LOW") return { kind: "product", id: `low-${metric.productId}`, title: metric.name, detail: `${metric.unitsSold} unidades · ${metric.stock} en inventario`, value: formatCOP(metric.revenue), tone: "gold", icon: "trending-down" };
+  if (type === "LOSS") return { kind: "product", id: `loss-${metric.productId}`, title: metric.name, detail: metric.grossProfit < 0 ? `Pérdida acumulada: ${formatCOP(Math.abs(metric.grossProfit))}` : "Precio actual inferior al costo", value: formatCOP(metric.currentPrice), tone: "coral", icon: "money-off" };
+  return { kind: "product", id: `exit-${metric.productId}`, title: metric.name, detail: metric.retirementReason ?? "Requiere revisión comercial", value: `${metric.stock} ud.`, tone: "coral", icon: "remove-shopping-cart" };
+}
+
+function groupRow(metric: SalesGroupMetric, label: string, icon: keyof typeof MaterialIcons.glyphMap): Extract<ReportRow, { kind: "group" }> { return { kind: "group", id: `${label}-${metric.id}`, title: metric.name, detail: `${metric.orders} pedidos · utilidad ${formatCOP(metric.grossProfit)}`, value: formatCOP(metric.revenue), icon }; }
+
+export default function SalesAnalyticsScreen() {
+  const { products, orders } = useNexo();
+  const { settings } = useCrm();
+  const analytics = buildSalesAnalytics({ products, orders, branches: settings.branches });
+  const rows: ReportRow[] = [
+    { kind: "section", id: "top-section", title: "Productos más vendidos", subtitle: "Ordenados por unidades vendidas en pedidos no anulados." },
+    ...analytics.bestSellers.slice(0, 5).map((metric) => productRow(metric, "TOP")),
+    { kind: "section", id: "low-section", title: "Productos menos vendidos", subtitle: "Solo muestra artículos con al menos una venta registrada." },
+    ...analytics.leastSellers.slice(0, 5).map((metric) => productRow(metric, "LOW")),
+    { kind: "section", id: "loss-section", title: "Productos que generan pérdidas", subtitle: "Costo histórico de ventas o precio actual inferior al costo." },
+    ...analytics.lossProducts.map((metric) => productRow(metric, "LOSS")),
+    { kind: "section", id: "exit-section", title: "Candidatos a retirar", subtitle: "Recomendación: revisa el catálogo antes de ocultar o descontinuar un producto." },
+    ...analytics.exitCandidates.map((metric) => productRow(metric, "EXIT")),
+    { kind: "section", id: "branch-section", title: "Desempeño por sede", subtitle: "Los pedidos nuevos se atribuyen a la sede de venta seleccionada." },
+    ...analytics.branches.map((metric) => groupRow(metric, "branch", "store")),
+    { kind: "section", id: "collection-section", title: "Desempeño por colección", subtitle: "Agrupación de ventas por colección configurada o por categoría." },
+    ...analytics.collections.map((metric) => groupRow(metric, "collection", "style")),
+  ];
+  const renderItem = ({ item }: { item: ReportRow }) => {
+    if (item.kind === "section") return <View style={styles.section}><Text style={styles.sectionTitle}>{item.title}</Text>{item.subtitle ? <Text style={styles.sectionSubtitle}>{item.subtitle}</Text> : null}</View>;
+    if (item.kind === "group") return <Card style={styles.row}><View style={styles.iconWrap}><MaterialIcons name={item.icon} size={19} color={colors.green} /></View><View style={styles.rowCopy}><Text style={styles.rowTitle}>{item.title}</Text><Text style={styles.rowDetail}>{item.detail}</Text></View><Text style={styles.rowValue}>{item.value}</Text></Card>;
+    const tone = item.tone === "coral" ? colors.coral : item.tone === "gold" ? colors.gold : item.tone === "green" ? colors.green : colors.ink;
+    return <Card style={styles.row}><View style={[styles.iconWrap, { backgroundColor: item.tone === "coral" ? "#FDE9E4" : colors.mint }]}><MaterialIcons name={item.icon} size={19} color={tone} /></View><View style={styles.rowCopy}><Text style={styles.rowTitle}>{item.title}</Text><Text style={styles.rowDetail}>{item.detail}</Text></View><Text style={[styles.rowValue, { color: tone }]}>{item.value}</Text></Card>;
+  };
+  return <ScreenContainer edges={["top", "bottom", "left", "right"]} containerClassName="bg-[#F6F3EE]" className="px-5"><FlatList data={rows} renderItem={renderItem} keyExtractor={(item) => item.id} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} ListHeaderComponent={<><View style={styles.header}><Pressable onPress={() => router.back()} style={styles.back}><MaterialIcons name="arrow-back" size={21} color={colors.ink} /></Pressable><View><Text style={styles.eyebrow}>ANÁLISIS COMERCIAL</Text><Text style={styles.title}>Productos y rentabilidad</Text></View></View><Card style={styles.info}><MaterialIcons name="tips-and-updates" size={22} color={colors.green} /><Text style={styles.infoText}>Las recomendaciones se calculan con pedidos no anulados y nunca eliminan productos automáticamente.</Text></Card><View style={styles.metrics}><MetricCard label="Pedidos analizados" value={String(analytics.activeOrders)} icon="receipt-long" helper="No anulados" /><MetricCard label="Más vendido" value={analytics.bestSellers[0]?.name ?? "Sin ventas"} icon="emoji-events" tone="gold" helper={analytics.bestSellers[0] ? `${analytics.bestSellers[0].unitsSold} unidades` : "Registra ventas para comparar"} /><MetricCard label="Con pérdida" value={String(analytics.lossProducts.length)} icon="money-off" tone="ink" helper="Requieren precio o costo" /><MetricCard label="Para revisar" value={String(analytics.exitCandidates.length)} icon="remove-shopping-cart" tone="ink" helper="Sin venta o margen negativo" /></View></>} ListEmptyComponent={<View style={styles.empty}><MaterialIcons name="analytics" size={34} color={colors.muted} /><Text style={styles.emptyText}>Aún no hay datos suficientes para generar el análisis comercial.</Text></View>} /></ScreenContainer>;
+}
+
+const styles = StyleSheet.create({ content: { gap: 10, paddingBottom: 30, paddingTop: 8 }, header: { alignItems: "center", flexDirection: "row", gap: 12, marginBottom: 4 }, back: { alignItems: "center", backgroundColor: colors.white, borderColor: colors.line, borderRadius: 13, borderWidth: 1, height: 42, justifyContent: "center", width: 42 }, eyebrow: { color: colors.muted, fontSize: 9, fontWeight: "900", letterSpacing: 0.7 }, title: { color: colors.ink, fontSize: 22, fontWeight: "800", marginTop: 2 }, info: { alignItems: "center", backgroundColor: colors.mint, borderColor: "#B5E0CF", flexDirection: "row", gap: 9, padding: 12 }, infoText: { color: colors.ink, flex: 1, fontSize: 10, fontWeight: "700", lineHeight: 14 }, metrics: { flexDirection: "row", flexWrap: "wrap", gap: 10, justifyContent: "space-between" }, section: { marginTop: 9 }, sectionTitle: { color: colors.ink, fontSize: 16, fontWeight: "800" }, sectionSubtitle: { color: colors.muted, fontSize: 10, lineHeight: 14, marginTop: 3 }, row: { alignItems: "center", flexDirection: "row", gap: 10, padding: 12 }, iconWrap: { alignItems: "center", backgroundColor: colors.mint, borderRadius: 11, height: 38, justifyContent: "center", width: 38 }, rowCopy: { flex: 1 }, rowTitle: { color: colors.ink, fontSize: 12, fontWeight: "800" }, rowDetail: { color: colors.muted, fontSize: 10, lineHeight: 13, marginTop: 3 }, rowValue: { color: colors.ink, fontSize: 11, fontWeight: "800", textAlign: "right" }, empty: { alignItems: "center", gap: 8, paddingVertical: 35 }, emptyText: { color: colors.muted, fontSize: 12, fontWeight: "700", textAlign: "center" } });

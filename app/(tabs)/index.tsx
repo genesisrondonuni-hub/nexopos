@@ -47,6 +47,7 @@ export default function DashboardScreen() {
 
         <View style={styles.actionBlock}>
           <PrimaryButton label="Nueva venta" icon="add-shopping-cart" onPress={() => router.push("/pos")} />
+          <PrimaryButton label="Análisis de productos" icon="insights" onPress={() => router.push("/sales-analytics" as never)} />
           <View style={styles.secondaryAction}><Text style={styles.secondaryText}>{lowStock ? `${lowStock} productos requieren atención de inventario` : "Inventario actualizado"}</Text><MaterialIcons name={lowStock ? "warning-amber" : "check-circle"} size={17} color={lowStock ? colors.gold : colors.green} /></View>
         </View>
 

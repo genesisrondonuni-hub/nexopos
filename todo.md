@@ -107,3 +107,8 @@
 - [x] Añadir plantillas Meta contextualizadas para cada perfil comercial.
 - [x] Configurar horarios de agenda por sede o punto de atención.
 - [x] Validar tienda de ropa y las configuraciones comerciales ampliadas.
+- [x] Preparar el envío real de plantillas Meta WhatsApp sin exponer credenciales.
+- [x] Ampliar variantes de producto con color y fotos por referencia.
+- [x] Añadir reportes de desempeño por sede y colección.
+- [x] Incorporar métricas de productos más vendidos, menos vendidos, con pérdida y candidatos a retiro.
+- [x] Validar cálculos de analítica comercial, tipado y pruebas automatizadas.

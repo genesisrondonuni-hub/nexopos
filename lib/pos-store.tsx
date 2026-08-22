@@ -87,6 +87,7 @@ type AgentOrderInput = {
 
 export type BusinessSettings = {
   whatsappNumber: string;
+  activeBranchId: string;
 };
 
 type NexoContextValue = {
@@ -107,6 +108,7 @@ type NexoContextValue = {
   createAgentOrder: (input: AgentOrderInput) => { order?: Order; reason?: string };
   cancelPendingOrder: (orderId: string, windowMinutes: number) => { cancelled: boolean; reason?: string };
   updateWhatsAppNumber: (value: string) => boolean;
+  updateActiveBranch: (branchId: string) => void;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   toggleCatalog: (productId: string) => void;
   updateProductCategory: (productId: string, category: string) => void;
@@ -128,7 +130,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<Order[]>(starterOrders);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [catalogCart, setCatalogCart] = useState<CartItem[]>([]);
-  const [businessSettings, setBusinessSettings] = useState<BusinessSettings>({ whatsappNumber: DEFAULT_SHOP_WHATSAPP_NUMBER });
+  const [businessSettings, setBusinessSettings] = useState<BusinessSettings>({ whatsappNumber: DEFAULT_SHOP_WHATSAPP_NUMBER, activeBranchId: "main" });
   const [summary, setSummary] = useState<DailySummary>({ sales: 1284400, expenses: 342800, profit: 941600, orders: 48 });
   const [importHistory, setImportHistory] = useState<InventoryImportRecord[]>([]);
   const [productMovements, setProductMovements] = useState<ProductMovement[]>([]);
@@ -144,7 +146,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
         if (state.orders) setOrders(state.orders);
         if (state.summary) setSummary(state.summary);
         if (state.businessSettings && isValidWhatsAppNumber(state.businessSettings.whatsappNumber)) {
-          setBusinessSettings({ whatsappNumber: normalizeWhatsAppNumber(state.businessSettings.whatsappNumber) });
+          setBusinessSettings({ whatsappNumber: normalizeWhatsAppNumber(state.businessSettings.whatsappNumber), activeBranchId: state.businessSettings.activeBranchId || "main" });
         }
         if (state.importHistory) setImportHistory(state.importHistory);
         if (state.productMovements) setProductMovements(state.productMovements);
@@ -167,7 +169,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     setCart((current) => {
       const found = current.find((item) => item.productId === product.id);
       if (found) return current.map((item) => item.id === found.id ? { ...item, quantity: item.quantity + 1 } : item);
-      return [...current, { id: `cart-${Date.now()}`, productId: product.id, productCode: product.code, name: product.name, quantity: 1, unitPrice: product.price, isFreeSale: false }];
+      return [...current, { id: `cart-${Date.now()}`, productId: product.id, productCode: product.code, name: product.name, quantity: 1, unitPrice: product.price, unitCost: product.cost, collection: product.collection, isFreeSale: false }];
     });
   }, []);
 
@@ -186,7 +188,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     setCatalogCart((current) => {
       const found = current.find((item) => item.productId === product.id);
       if (found) return current.map((item) => item.id === found.id ? { ...item, quantity: item.quantity + 1 } : item);
-      return [...current, { id: `shop-${Date.now()}`, productId: product.id, productCode: product.code, name: product.name, quantity: 1, unitPrice: product.price, isFreeSale: false }];
+      return [...current, { id: `shop-${Date.now()}`, productId: product.id, productCode: product.code, name: product.name, quantity: 1, unitPrice: product.price, unitCost: product.cost, collection: product.collection, isFreeSale: false }];
     });
   }, []);
 
@@ -200,6 +202,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     const paid = input.payments.reduce((value, payment) => value + payment.amount, 0);
     if (!cart.length || Math.abs(total - paid) > 0.01) return null;
 
+    const timestamp = Date.now();
     const order: Order = {
       id: `o-${Date.now()}`,
       code: `#${1050 + orders.length}`,
@@ -209,6 +212,8 @@ export function NexoProvider({ children }: { children: ReactNode }) {
       delivery: "Mesa",
       total,
       createdAt: "Ahora",
+      createdTimestamp: timestamp,
+      branchId: businessSettings.activeBranchId,
       items: cart,
     };
 
@@ -226,15 +231,16 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     });
     setSummary((current) => ({ ...current, sales: current.sales + total, profit: current.profit + total - cart.reduce((cost, item) => {
       const product = products.find((entry) => entry.id === item.productId);
-      return cost + (product?.cost ?? 0) * item.quantity;
+      return cost + (item.unitCost ?? product?.cost ?? 0) * item.quantity;
     }, 0), orders: current.orders + 1 }));
     setCart([]);
     return order;
-  }, [cart, orders.length, products]);
+  }, [businessSettings.activeBranchId, cart, orders.length, products]);
 
   const createPublicOrder = useCallback((input: PublicOrderInput) => {
     if (!catalogCart.length) return null;
     const total = catalogCart.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0) + (input.deliveryFee ?? 0);
+    const timestamp = Date.now();
     const order: Order = {
       id: `o-${Date.now()}`,
       code: `#${1050 + orders.length}`,
@@ -247,12 +253,14 @@ export function NexoProvider({ children }: { children: ReactNode }) {
       deliveryFee: input.deliveryFee,
       total,
       createdAt: "Ahora",
+      createdTimestamp: timestamp,
+      branchId: businessSettings.activeBranchId,
       items: catalogCart,
     };
     setOrders((current) => [order, ...current]);
     setCatalogCart([]);
     return order;
-  }, [catalogCart, orders.length]);
+  }, [businessSettings.activeBranchId, catalogCart, orders.length]);
 
   const createAgentOrder = useCallback((input: AgentOrderInput) => {
     const customerName = input.customerName.trim();
@@ -261,16 +269,16 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     if (input.delivery === "Domicilio" && !input.deliveryAddress?.trim()) return { reason: "Ingresa la dirección para coordinar el domicilio." };
     const requested = input.items.map((item) => ({ ...item, product: products.find((product) => product.id === item.productId) })).filter((item): item is { productId: string; quantity: number; product: Product } => Boolean(item.product && Number.isInteger(item.quantity) && item.quantity > 0));
     if (requested.length !== input.items.length || requested.some((item) => item.product.stock < item.quantity)) return { reason: "Uno o más productos ya no tienen existencias suficientes." };
-    const items: CartItem[] = requested.map((item, index) => ({ id: `agent-${Date.now()}-${index}`, productId: item.product.id, productCode: item.product.code, name: item.product.name, quantity: item.quantity, unitPrice: item.product.price, isFreeSale: false }));
+    const items: CartItem[] = requested.map((item, index) => ({ id: `agent-${Date.now()}-${index}`, productId: item.product.id, productCode: item.product.code, name: item.product.name, quantity: item.quantity, unitPrice: item.product.price, unitCost: item.product.cost, collection: item.product.collection, isFreeSale: false }));
     const total = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
     const timestamp = Date.now();
-    const order: Order = { id: `o-agent-${timestamp}`, code: `#${1050 + orders.length}`, customerName, customerPhone, status: "PENDIENTE", source: "AGENTE", delivery: input.delivery, deliveryAddress: input.deliveryAddress?.trim(), total, createdAt: "Ahora", createdTimestamp: timestamp, items };
+    const order: Order = { id: `o-agent-${timestamp}`, code: `#${1050 + orders.length}`, customerName, customerPhone, status: "PENDIENTE", source: "AGENTE", delivery: input.delivery, deliveryAddress: input.deliveryAddress?.trim(), total, createdAt: "Ahora", createdTimestamp: timestamp, branchId: businessSettings.activeBranchId, items };
     setOrders((current) => [order, ...current]);
     setProducts((current) => current.map((product) => { const sold = requested.find((item) => item.productId === product.id)?.quantity ?? 0; return sold ? { ...product, stock: product.stock - sold } : product; }));
     setProductMovements((current) => [...requested.map((item, index) => ({ id: `mov-agent-${Date.now()}-${index}`, productId: item.productId, type: "VENTA_AGENTE" as const, label: `Pedido del agente ${order.code}`, quantityDelta: -item.quantity, stockAfter: item.product.stock - item.quantity, createdAt: "Ahora" })), ...current].slice(0, 400));
     setSummary((current) => ({ ...current, sales: current.sales + total, profit: current.profit + total - requested.reduce((sum, item) => sum + item.product.cost * item.quantity, 0), orders: current.orders + 1 }));
     return { order };
-  }, [orders.length, products]);
+  }, [businessSettings.activeBranchId, orders.length, products]);
 
   const cancelPendingOrder = useCallback((orderId: string, windowMinutes: number) => {
     const order = orders.find((item) => item.id === orderId);
@@ -280,14 +288,19 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     setOrders((current) => current.map((item) => item.id === orderId ? { ...item, status: "ARCHIVADO", cancelledAt: "Ahora", cancellationReason: "Cancelado por operador" } : item));
     setProducts((current) => current.map((product) => { const restored = order.items.filter((item) => item.productId === product.id).reduce((sum, item) => sum + item.quantity, 0); return restored ? { ...product, stock: product.stock + restored } : product; }));
     setProductMovements((current) => [...order.items.filter((item) => item.productId).map((item, index) => ({ id: `mov-cancel-${Date.now()}-${index}`, productId: item.productId!, type: "CANCELACIÓN" as const, label: `Cancelación ${order.code}`, quantityDelta: item.quantity, createdAt: "Ahora" })), ...current].slice(0, 400));
-    if (order.source === "AGENTE") setSummary((current) => ({ ...current, sales: Math.max(0, current.sales - order.total), profit: Math.max(0, current.profit - (order.total - order.items.reduce((sum, item) => sum + (products.find((product) => product.id === item.productId)?.cost ?? 0) * item.quantity, 0))), orders: Math.max(0, current.orders - 1) }));
+    if (order.source === "AGENTE") setSummary((current) => ({ ...current, sales: Math.max(0, current.sales - order.total), profit: Math.max(0, current.profit - (order.total - order.items.reduce((sum, item) => sum + (item.unitCost ?? products.find((product) => product.id === item.productId)?.cost ?? 0) * item.quantity, 0))), orders: Math.max(0, current.orders - 1) }));
     return { cancelled: true };
   }, [orders, products]);
 
   const updateWhatsAppNumber = useCallback((value: string) => {
     if (!isValidWhatsAppNumber(value)) return false;
-    setBusinessSettings({ whatsappNumber: normalizeWhatsAppNumber(value) });
+    setBusinessSettings((current) => ({ ...current, whatsappNumber: normalizeWhatsAppNumber(value) }));
     return true;
+  }, []);
+
+  const updateActiveBranch = useCallback((branchId: string) => {
+    const normalized = branchId.trim();
+    if (normalized) setBusinessSettings((current) => ({ ...current, activeBranchId: normalized }));
   }, []);
 
   const updateOrderStatus = useCallback((orderId: string, status: OrderStatus) => {
@@ -316,7 +329,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     return { created: true };
   }, [products]);
 
-  const updateProductDetails = useCallback((productId: string, changes: Pick<Product, "code" | "name" | "description" | "imageUri" | "category" | "price" | "cost" | "stock" | "minStock">) => {
+  const updateProductDetails = useCallback((productId: string, changes: Pick<Product, "code" | "name" | "description" | "imageUri" | "galleryImageUris" | "category" | "collection" | "colors" | "sizes" | "price" | "cost" | "stock" | "minStock">) => {
     const code = normalizeProductCode(changes.code);
     if (!isValidProductCode(code) || !changes.name.trim() || !changes.description.trim()) return { updated: false, reason: "Revisa el código, nombre y descripción del producto." };
     if (products.some((entry) => entry.id !== productId && entry.code === code)) return { updated: false, reason: "Ya existe otro producto con este código." };
@@ -369,7 +382,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     return { reverted: true };
   }, [importHistory, products]);
 
-  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, hydrated]);
+  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, hydrated]);
 
   return <NexoContext.Provider value={value}>{children}</NexoContext.Provider>;
 }
