@@ -37,6 +37,17 @@ export type CrmMessageTemplates = {
   deliveryUpdate: string;
   outsideHours: string;
   handoff: string;
+  appointmentConfirmation: string;
+  catalogWelcome: string;
+};
+
+export type BranchSchedule = {
+  id: string;
+  name: string;
+  opensAt: string;
+  closesAt: string;
+  servesSaturday: boolean;
+  servesSunday: boolean;
 };
 
 export type AgentServicePolicy = {
@@ -59,4 +70,5 @@ export type CrmSettings = {
   automations: CrmAutomationSettings;
   templates: CrmMessageTemplates;
   agentPolicy: AgentServicePolicy;
+  branches: BranchSchedule[];
 };

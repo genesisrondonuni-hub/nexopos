@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import type { AgentServicePolicy, CrmAutomationSettings, CrmMessageTemplates, CrmSettings, DeliveryPreferences, DeliveryStatus, SalesOpportunity } from "@/shared/crm-types";
+import type { AgentServicePolicy, BranchSchedule, CrmAutomationSettings, CrmMessageTemplates, CrmSettings, DeliveryPreferences, DeliveryStatus, SalesOpportunity } from "@/shared/crm-types";
 
 const STORAGE_KEY = "@nexopos:crm:v1";
 
@@ -14,8 +14,9 @@ const defaultSettings: CrmSettings = {
   ],
   delivery: { enabled: true, baseFee: 4500, freeShippingAbove: 60000, zones: "Chapinero, Usaquén, Teusaquillo" },
   automations: { enabled: true, welcomeOnNewLead: true, deliveryStatusUpdate: true, followUpReminder: true },
-  templates: { newLead: "crm_bienvenida", deliveryUpdate: "crm_estado_delivery", outsideHours: "crm_fuera_horario", handoff: "crm_asesor_humano" },
+  templates: { newLead: "crm_bienvenida", deliveryUpdate: "crm_estado_delivery", outsideHours: "crm_fuera_horario", handoff: "crm_asesor_humano", appointmentConfirmation: "crm_confirmacion_cita", catalogWelcome: "crm_catalogo_bienvenida" },
   agentPolicy: { enabled: true, timezone: "America/Bogota", opensAt: "08:00", closesAt: "20:00", servesSaturday: true, servesSunday: false, outsideHoursMessage: "Gracias por escribirnos. Nuestro equipo responderá en el próximo horario de atención.", humanHandoffEnabled: true, humanHandoffMessage: "Te pondré en contacto con un asesor del negocio para continuar tu solicitud.", allowPendingCancellation: true, cancellationWindowMinutes: 10 },
+  branches: [{ id: "main", name: "Sede principal", opensAt: "08:00", closesAt: "20:00", servesSaturday: true, servesSunday: false }],
 };
 
 const starterOpportunities: SalesOpportunity[] = [
@@ -38,6 +39,8 @@ type CrmContextValue = {
   updateAutomations: (changes: Partial<CrmAutomationSettings>) => void;
   updateTemplates: (changes: Partial<CrmMessageTemplates>) => void;
   updateAgentPolicy: (changes: Partial<AgentServicePolicy>) => void;
+  updateBranchSchedule: (branchId: string, changes: Partial<BranchSchedule>) => void;
+  addBranchSchedule: () => void;
   createAgentOpportunity: (input: { customerName: string; phone: string; value: number; delivery: boolean; address?: string }) => void;
 };
 
@@ -54,7 +57,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         const saved = await AsyncStorage.getItem(STORAGE_KEY);
         if (!saved) return;
         const parsed = JSON.parse(saved) as { settings?: CrmSettings; opportunities?: SalesOpportunity[] };
-        if (parsed.settings?.stages?.length) setSettings({ ...defaultSettings, ...parsed.settings, templates: { ...defaultSettings.templates, ...parsed.settings.templates }, agentPolicy: { ...defaultSettings.agentPolicy, ...parsed.settings.agentPolicy } });
+        if (parsed.settings?.stages?.length) setSettings({ ...defaultSettings, ...parsed.settings, templates: { ...defaultSettings.templates, ...parsed.settings.templates }, agentPolicy: { ...defaultSettings.agentPolicy, ...parsed.settings.agentPolicy }, branches: parsed.settings.branches?.length ? parsed.settings.branches : defaultSettings.branches });
         if (parsed.opportunities) setOpportunities(parsed.opportunities);
       } catch {
         // Starter CRM data is intentionally retained when local storage is unavailable.
@@ -114,11 +117,19 @@ export function CrmProvider({ children }: { children: ReactNode }) {
     setSettings((current) => ({ ...current, agentPolicy: { ...current.agentPolicy, ...changes } }));
   }, []);
 
+  const updateBranchSchedule = useCallback((branchId: string, changes: Partial<BranchSchedule>) => {
+    setSettings((current) => ({ ...current, branches: current.branches.map((branch) => branch.id === branchId ? { ...branch, ...changes } : branch) }));
+  }, []);
+
+  const addBranchSchedule = useCallback(() => {
+    setSettings((current) => ({ ...current, branches: [...current.branches, { id: `branch-${Date.now()}`, name: `Sede ${current.branches.length + 1}`, opensAt: current.agentPolicy.opensAt, closesAt: current.agentPolicy.closesAt, servesSaturday: current.agentPolicy.servesSaturday, servesSunday: current.agentPolicy.servesSunday }] }));
+  }, []);
+
   const createAgentOpportunity = useCallback((input: { customerName: string; phone: string; value: number; delivery: boolean; address?: string }) => {
     setOpportunities((current) => [{ id: `crm-agent-${Date.now()}`, customerName: input.customerName.trim(), phone: input.phone.trim(), stageId: settings.stages.find((stage) => stage.id === "confirmed")?.id ?? settings.stages[0].id, source: "WHATSAPP", value: input.value, lastActivity: "Ahora · Agente", deliveryStatus: input.delivery ? "PENDIENTE" : undefined, address: input.address?.trim() }, ...current]);
   }, [settings.stages]);
 
-  const value = useMemo(() => ({ settings, opportunities, hydrated, moveOpportunity, updateDeliveryStatus, updateStageName, addStage, removeStage, updateDelivery, updateAutomations, updateTemplates, updateAgentPolicy, createAgentOpportunity }), [settings, opportunities, hydrated, moveOpportunity, updateDeliveryStatus, updateStageName, addStage, removeStage, updateDelivery, updateAutomations, updateTemplates, updateAgentPolicy, createAgentOpportunity]);
+  const value = useMemo(() => ({ settings, opportunities, hydrated, moveOpportunity, updateDeliveryStatus, updateStageName, addStage, removeStage, updateDelivery, updateAutomations, updateTemplates, updateAgentPolicy, updateBranchSchedule, addBranchSchedule, createAgentOpportunity }), [settings, opportunities, hydrated, moveOpportunity, updateDeliveryStatus, updateStageName, addStage, removeStage, updateDelivery, updateAutomations, updateTemplates, updateAgentPolicy, updateBranchSchedule, addBranchSchedule, createAgentOpportunity]);
 
   return <CrmContext.Provider value={value}>{children}</CrmContext.Provider>;
 }

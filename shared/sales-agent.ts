@@ -23,6 +23,7 @@ const profileInstructions: Record<BusinessProfileId, string> = {
   VETERINARY_LAB: "Orienta únicamente sobre servicios comerciales, logística y disponibilidad. No evalúes animales, síntomas, muestras, resultados ni tratamientos; escala las consultas clínicas a personal veterinario habilitado.",
   VETERINARY_OFFICE: "Orienta sobre agenda, servicios comerciales y productos disponibles. No diagnostiques ni recomiendes tratamientos para mascotas; escala consultas clínicas o urgentes a personal veterinario habilitado.",
   SHOE_STORE: "Pregunta por talla, estilo, color y disponibilidad. Recomienda solo referencias existentes y no prometas cambios, reservas o descuentos no confirmados.",
+  CLOTHING_STORE: "Pregunta por talla, prenda, color y colección. Recomienda solo referencias disponibles y no prometas cambios, reservas, descuentos ni ajustes no confirmados.",
   ONLINE_STORE: "Orienta sobre catálogo, disponibilidad, pedido web, entrega y recogida. No inventes métodos de pago, descuentos, coberturas o tiempos de despacho.",
 };
 

@@ -17,6 +17,7 @@ describe("perfiles multi-negocio", () => {
       "VETERINARY_LAB",
       "VETERINARY_OFFICE",
       "SHOE_STORE",
+      "CLOTHING_STORE",
       "ONLINE_STORE",
     ]);
   });
@@ -29,6 +30,7 @@ describe("perfiles multi-negocio", () => {
     const medicalOffice = BUSINESS_PROFILES.find((profile) => profile.id === "MEDICAL_OFFICE")!;
     const veterinaryOffice = BUSINESS_PROFILES.find((profile) => profile.id === "VETERINARY_OFFICE")!;
     const shoeStore = BUSINESS_PROFILES.find((profile) => profile.id === "SHOE_STORE")!;
+    const clothingStore = BUSINESS_PROFILES.find((profile) => profile.id === "CLOTHING_STORE")!;
     const onlineStore = BUSINESS_PROFILES.find((profile) => profile.id === "ONLINE_STORE")!;
     expect(restaurant.features.recipes).toBe(true);
     expect(supermarket.features.barcode).toBe(true);
@@ -39,6 +41,7 @@ describe("perfiles multi-negocio", () => {
     expect(medicalOffice.features.serviceOrders).toBe(true);
     expect(veterinaryOffice.features.variants).toBe(true);
     expect(shoeStore.features.variants).toBe(true);
+    expect(clothingStore.features.variants).toBe(true);
     expect(onlineStore.features.onlineSales).toBe(true);
   });
 });

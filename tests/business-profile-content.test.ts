@@ -14,4 +14,10 @@ describe("contenido inicial por perfil", () => {
     expect(catalog.some((item) => item.name === "Tenis urbano")).toBe(true);
     expect(getProfileCopy("SHOE_STORE").agentWelcome).toContain("talla");
   });
+
+  it("incluye prendas con precio y disponibilidad inicial para tienda de ropa", () => {
+    const catalog = getProfileStarterCatalog("CLOTHING_STORE");
+    expect(catalog.some((item) => item.name === "Camiseta básica" && item.price && item.stock)).toBe(true);
+    expect(getProfileCopy("CLOTHING_STORE").agentWelcome).toContain("prenda");
+  });
 });

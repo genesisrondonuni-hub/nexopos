@@ -1,4 +1,4 @@
-export type BusinessProfileId = "RESTAURANT" | "FAST_FOOD" | "SUPERMARKET" | "GROCERY" | "WAREHOUSE" | "LIQUOR_STORE" | "MEDICAL_OFFICE" | "CLINICAL_LAB" | "DENTAL_CLINIC" | "VETERINARY_LAB" | "VETERINARY_OFFICE" | "SHOE_STORE" | "ONLINE_STORE";
+export type BusinessProfileId = "RESTAURANT" | "FAST_FOOD" | "SUPERMARKET" | "GROCERY" | "WAREHOUSE" | "LIQUOR_STORE" | "MEDICAL_OFFICE" | "CLINICAL_LAB" | "DENTAL_CLINIC" | "VETERINARY_LAB" | "VETERINARY_OFFICE" | "SHOE_STORE" | "CLOTHING_STORE" | "ONLINE_STORE";
 
 export type BusinessFeatures = {
   recipes: boolean;
@@ -26,6 +26,9 @@ export type BusinessStarterItem = {
   description: string;
   category: string;
   type: "FINAL" | "SERVICE";
+  price?: number;
+  cost?: number;
+  stock?: number;
 };
 
 export type BusinessProfileDefinition = {

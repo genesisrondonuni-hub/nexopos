@@ -9,6 +9,8 @@ export function buildCrmProfileChecks(configuration: BusinessConfiguration): Crm
     { id: "copy", title: "Mensajes comerciales", detail: "Personaliza el saludo de catálogo, CRM y agente antes de atender clientes.", complete: Boolean(configuration.copy.catalogGreeting.trim() && configuration.copy.crmMessage.trim() && configuration.copy.agentWelcome.trim()) },
     { id: "categories", title: "Categorías de operación", detail: "Revisa que las categorías reflejen los servicios o productos reales del negocio.", complete: configuration.categories.length >= 2 },
     { id: "catalog", title: "Catálogo público", detail: "Verifica qué elementos se muestran y sus precios antes de compartir el catálogo.", complete: configuration.features.catalog },
+    { id: "templates", title: "Plantillas Meta", detail: "Configura nombres de plantillas por perfil antes de activar WhatsApp Cloud API.", complete: true },
+    { id: "branches", title: "Horarios por sede", detail: "Define al menos una sede y confirma sus horarios antes de abrir agenda comercial.", complete: true },
   ];
   if (configuration.features.appointments) checks.push({ id: "agenda", title: "Agenda comercial", detail: "Confirma horario, servicios y escalamiento a personal habilitado.", complete: configuration.features.serviceOrders });
   if (configuration.features.variants) checks.push({ id: "variants", title: "Variantes y referencias", detail: "Registra tallas, colores o referencias y valida existencias antes de vender.", complete: true });

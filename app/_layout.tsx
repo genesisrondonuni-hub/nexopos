@@ -111,6 +111,7 @@ export default function RootLayout() {
                   <Stack.Screen name="api-integrations" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="google-sheets-settings" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="crm-settings" options={{ presentation: "formSheet" }} />
+                  <Stack.Screen name="commercial-settings" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="crm-profile-check" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="oauth/callback" />
                   </Stack>

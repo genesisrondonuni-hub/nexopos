@@ -8,6 +8,8 @@ describe("validación guiada CRM por perfil", () => {
     const ids = buildCrmProfileChecks(medical).map((check) => check.id);
     expect(ids).toContain("agenda");
     expect(ids).toContain("scope");
+    expect(ids).toContain("templates");
+    expect(ids).toContain("branches");
   });
 
   it("incluye variantes y ventas en línea cuando el perfil las habilita", () => {

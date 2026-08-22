@@ -31,7 +31,7 @@ export default function BusinessProfileScreen() {
   const loadStarterCatalog = () => {
     if (!starterCatalog.length) return;
     Alert.alert("Cargar catálogo inicial", `Se crearán o actualizarán ${starterCatalog.length} elementos para ${profile.label}.`, [{ text: "Cancelar", style: "cancel" }, { text: "Cargar", onPress: () => {
-      const items = starterCatalog.map((item, index) => ({ ...item, code: createProductCode(`${profile.shortLabel}-${item.name}`, products.length + index), price: 0, cost: 0, stock: item.type === "SERVICE" ? 1 : 0, minStock: 0, showInCatalog: true }));
+      const items = starterCatalog.map((item, index) => ({ ...item, code: createProductCode(`${profile.shortLabel}-${item.name}`, products.length + index), price: item.price ?? 0, cost: item.cost ?? 0, stock: item.stock ?? (item.type === "SERVICE" ? 1 : 0), minStock: 0, showInCatalog: true }));
       const result = upsertImportedProducts(items, `Catálogo inicial · ${profile.label}`);
       haptic.success();
       Alert.alert("Catálogo cargado", `${result.created} elementos creados y ${result.updated} actualizados.`);

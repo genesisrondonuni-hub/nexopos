@@ -102,3 +102,8 @@
 - [x] Cargar catálogos y servicios iniciales específicos para cada nuevo comercio.
 - [x] Añadir una validación guiada del CRM contextual por perfil.
 - [x] Validar las configuraciones y flujos de personalización comercial.
+- [x] Definir el perfil de tienda de ropa y sus categorías, variantes y CRM contextual.
+- [x] Permitir ajustar precios y disponibilidad al cargar catálogos iniciales.
+- [x] Añadir plantillas Meta contextualizadas para cada perfil comercial.
+- [x] Configurar horarios de agenda por sede o punto de atención.
+- [x] Validar tienda de ropa y las configuraciones comerciales ampliadas.
