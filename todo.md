@@ -192,4 +192,4 @@
 - [x] Facilitar la actualización manual de la tasa USD/VES desde el cobro.
 - [x] Mostrar fecha y referencia de la tasa junto al total dual.
 - [x] Permitir moneda recibida VES o USD en cada parte del pago mixto.
-- [ ] Validar y sincronizar las mejoras de pago dual con GitHub.
+- [x] Validar y sincronizar las mejoras de pago dual con GitHub.
