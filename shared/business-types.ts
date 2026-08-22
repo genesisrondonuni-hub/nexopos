@@ -23,15 +23,33 @@ export type BusinessCopy = {
 
 export type FiscalDocumentMode = "OPERATIVO" | "DIGITAL_PENDIENTE";
 
+export type ExchangeRateHistoryEntry = {
+  id: string;
+  rate: number;
+  recordedAt: string;
+  sourceNote: string;
+};
+
+export type FiscalProviderDraft = {
+  name: string;
+  rif: string;
+  authorizationReference: string;
+  verificationStatus: "NO_CONFIGURADO" | "PENDIENTE" | "VERIFICADO";
+  verifiedAt: string | null;
+};
+
 export type VenezuelanFiscalSettings = {
   countryCode: "VE";
   currencyCode: "VES";
   displayCurrency: "VES" | "USD";
   usdVesRate: number;
   usdVesRateUpdatedAt: string | null;
+  usdVesRateSource: string;
+  usdVesRateHistory: ExchangeRateHistoryEntry[];
   rif: string;
   ivaRate: number;
   documentMode: FiscalDocumentMode;
+  provider: FiscalProviderDraft;
 };
 
 export type BusinessStarterItem = {

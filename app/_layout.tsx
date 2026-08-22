@@ -100,6 +100,7 @@ export default function RootLayout() {
                   <Stack.Screen name="business-settings" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="business-profile" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="fiscal-settings" options={{ presentation: "formSheet" }} />
+                  <Stack.Screen name="fiscal-provider-settings" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="sync-settings" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="profile-demo-editor" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="daily-agenda" options={{ presentation: "formSheet" }} />

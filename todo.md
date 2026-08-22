@@ -167,3 +167,8 @@
 - [x] Sustituir el alias monetario heredado en interfaces, etiquetas y respuestas del agente.
 - [x] Garantizar actualizaciones atómicas del respaldo versionado ante concurrencia.
 - [x] Eliminar trazas de sesión y excluir archivos .env del repositorio público.
+- [x] Revisar los modelos actuales de moneda, respaldo y facturación para las mejoras autorizadas.
+- [x] Registrar y consultar un historial auditable de tasas USD/VES manuales.
+- [x] Implementar conciliación de cambios y resolución guiada de conflictos multi-caja.
+- [x] Añadir la preparación administrativa para proveedores fiscales autorizados sin emisión activa.
+- [ ] Validar y sincronizar las mejoras de tasa, conciliación y fiscalidad con GitHub.

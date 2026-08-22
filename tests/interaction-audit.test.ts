@@ -14,8 +14,8 @@ describe("auditoría de interacciones", () => {
   });
 
   it("conserva pantallas reales para los accesos administrativos y de soporte", () => {
-    ["app/team-permissions.tsx", "app/billing.tsx", "app/help-center.tsx", "app/sales-analytics.tsx", "app/business-profile.tsx", "app/fiscal-settings.tsx", "app/sync-settings.tsx"].forEach((path) => expect(existsSync(resolve(root, path))).toBe(true));
+    ["app/team-permissions.tsx", "app/billing.tsx", "app/help-center.tsx", "app/sales-analytics.tsx", "app/business-profile.tsx", "app/fiscal-settings.tsx", "app/fiscal-provider-settings.tsx", "app/sync-settings.tsx"].forEach((path) => expect(existsSync(resolve(root, path))).toBe(true));
     const layout = readFileSync(resolve(root, "app/_layout.tsx"), "utf8");
-    ["team-permissions", "billing", "help-center", "fiscal-settings", "sync-settings"].forEach((route) => expect(layout).toContain(`name="${route}"`));
+    ["team-permissions", "billing", "help-center", "fiscal-settings", "fiscal-provider-settings", "sync-settings"].forEach((route) => expect(layout).toContain(`name="${route}"`));
   });
 });
