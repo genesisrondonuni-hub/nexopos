@@ -139,3 +139,8 @@
 - [x] Reiniciar y comprobar el servidor tras la interrupción reportada.
 - [x] Corregir los controles Pendientes y Confirmación de pedidos.
 - [x] Validar y sincronizar el flujo corregido de pedidos con GitHub.
+- [x] Crear el registro administrable de proveedores.
+- [x] Implementar pedidos de compra y control de despachos por proveedor.
+- [x] Importar recepciones de mercancía desde hoja de cálculo y actualizar existencias.
+- [x] Generar la lista de productos por reponer según el stock mínimo.
+- [x] Validar y sincronizar el módulo de abastecimiento con GitHub.

@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { DEFAULT_SHOP_WHATSAPP_NUMBER, isValidWhatsAppNumber, normalizeWhatsAppNumber } from "@/lib/whatsapp";
 import type { CartItem, CashMovement, CashSession, DailySummary, Order, OrderStatus, PaymentSplit, Product, ProductMovement } from "@/shared/pos-types";
 import { getCashSessionSummary } from "@/shared/cash-utils";
+import type { SupplierReceiptLine } from "@/shared/supply-types";
 import { applyInventoryImport, revertInventoryImport, type ImportedInventoryProduct, type InventoryImportRecord } from "@/shared/inventory-import";
 import { createProductCode, getBarcodeValidation, isValidProductCode, normalizeProductCode } from "@/shared/product-code";
 import { getProfileDemoData, isDemoOrderId, isDemoProductId } from "@/shared/business-profile-demo";
@@ -76,6 +77,7 @@ type NexoContextValue = {
   applyProductImages: (images: Array<{ productId: string; imageUri: string }>) => { updated: number };
   applyImportedProductCodes: (updates: Array<{ productId: string; code: string }>) => { updated: number; reason?: string };
   upsertImportedProducts: (products: ImportedInventoryProduct[], source?: string) => { created: number; updated: number; importId: string };
+  receiveSupplierStock: (lines: SupplierReceiptLine[]) => { applied: number; unmatched: number };
   importHistory: InventoryImportRecord[];
   productMovements: ProductMovement[];
   revertImport: (importId: string) => { reverted: boolean; reason?: string };
@@ -379,6 +381,25 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     return { created: result.record.created, updated: result.record.updated, importId: result.record.id };
   }, [products]);
 
+  const receiveSupplierStock = useCallback((lines: SupplierReceiptLine[]) => {
+    const normalized = (value: string) => value.trim().toLocaleLowerCase();
+    const matches = lines.map((line) => ({ line, product: products.find((product) => (line.code && product.code === line.code) || normalized(product.name) === normalized(line.name)) }));
+    const applied = matches.filter((entry) => entry.product).length;
+    const unmatched = matches.length - applied;
+    const byProductId = new Map(matches.filter((entry): entry is { line: SupplierReceiptLine; product: Product } => Boolean(entry.product)).map((entry) => [entry.product.id, entry.line]));
+    if (!byProductId.size) return { applied, unmatched };
+    setProducts((current) => current.map((product) => {
+      const line = byProductId.get(product.id);
+      if (!line) return product;
+      const nextStock = product.stock + line.quantity;
+      const weightedCost = line.unitCost === undefined ? product.cost : ((product.cost * product.stock) + (line.unitCost * line.quantity)) / nextStock;
+      return { ...product, stock: nextStock, cost: Math.round(weightedCost * 100) / 100 };
+    }));
+    const now = Date.now();
+    setProductMovements((current) => [...matches.filter((entry): entry is { line: SupplierReceiptLine; product: Product } => Boolean(entry.product)).map((entry, index) => ({ id: `mov-supply-${now}-${index}`, productId: entry.product.id, type: "IMPORTACIÓN" as const, label: "Recepción de proveedor", quantityDelta: entry.line.quantity, stockAfter: entry.product.stock + entry.line.quantity, createdAt: "Ahora" })), ...current].slice(0, 400));
+    return { applied, unmatched };
+  }, [products]);
+
   const revertImport = useCallback((importId: string) => {
     const record = importHistory.find((entry) => entry.id === importId);
     if (!record) return { reverted: false, reason: "No encontramos este registro de importación." };
@@ -400,7 +421,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     return { products: demo.products.length, orders: demo.orders.length };
   }, []);
 
-  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, cashSession, cashMovements, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, openCashSession, closeCashSession, recordCashMovement, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, assignKitchenStation, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, replaceProfileDemo, hydrated }), [products, orders, cart, catalogCart, businessSettings, cashSession, cashMovements, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, openCashSession, closeCashSession, recordCashMovement, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, assignKitchenStation, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, replaceProfileDemo, hydrated]);
+  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, cashSession, cashMovements, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, openCashSession, closeCashSession, recordCashMovement, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, assignKitchenStation, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, receiveSupplierStock, revertImport, replaceProfileDemo, hydrated }), [products, orders, cart, catalogCart, businessSettings, cashSession, cashMovements, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, openCashSession, closeCashSession, recordCashMovement, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, assignKitchenStation, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, receiveSupplierStock, revertImport, replaceProfileDemo, hydrated]);
 
   return <NexoContext.Provider value={value}>{children}</NexoContext.Provider>;
 }

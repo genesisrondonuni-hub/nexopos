@@ -22,6 +22,7 @@ import { NexoProvider } from "@/lib/pos-store";
 import { CrmProvider } from "@/lib/crm-store";
 import { BusinessProvider } from "@/lib/business-store";
 import { IntegrationsProvider } from "@/lib/integrations-store";
+import { SupplyProvider } from "@/lib/supply-store";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -88,8 +89,9 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <BusinessProvider>
             <NexoProvider>
-              <CrmProvider>
-                <IntegrationsProvider>
+              <SupplyProvider>
+                <CrmProvider>
+                  <IntegrationsProvider>
                   <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen name="checkout" options={{ presentation: "formSheet" }} />
@@ -109,6 +111,9 @@ export default function RootLayout() {
                   <Stack.Screen name="product-scanner" options={{ presentation: "fullScreenModal" }} />
                   <Stack.Screen name="inventory-import" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="inventory-import-history" options={{ presentation: "formSheet" }} />
+                  <Stack.Screen name="supply" options={{ presentation: "formSheet" }} />
+                  <Stack.Screen name="supply-supplier" options={{ presentation: "formSheet" }} />
+                  <Stack.Screen name="supply-receipt-import" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="gemini-settings" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="api-integrations" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="google-sheets-settings" options={{ presentation: "formSheet" }} />
@@ -123,8 +128,9 @@ export default function RootLayout() {
                   <Stack.Screen name="crm-profile-check" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="oauth/callback" />
                   </Stack>
-                </IntegrationsProvider>
-              </CrmProvider>
+                  </IntegrationsProvider>
+                </CrmProvider>
+              </SupplyProvider>
             </NexoProvider>
           </BusinessProvider>
           <StatusBar style="auto" />
