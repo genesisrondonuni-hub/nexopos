@@ -187,4 +187,4 @@
 - [x] Sincronizar la corrección de cámara con GitHub.
 - [x] Revisar el cálculo y formato monetario de la pantalla de cobro.
 - [x] Mostrar importes equivalentes USD/VES en el resumen de cobro.
-- [ ] Validar y sincronizar la presentación dual en el cobro con GitHub.
+- [x] Validar y sincronizar la presentación dual en el cobro con GitHub.
