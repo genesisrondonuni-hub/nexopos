@@ -22,11 +22,14 @@ function normalizePhone(value: string) {
 }
 
 export function getMetaWhatsAppStatus() {
-  const configured = Boolean(process.env.META_WHATSAPP_ACCESS_TOKEN && process.env.META_WHATSAPP_PHONE_NUMBER_ID && process.env.META_WHATSAPP_WABA_ID && process.env.META_WEBHOOK_VERIFY_TOKEN);
+  const sendReady = Boolean(process.env.META_WHATSAPP_ACCESS_TOKEN?.trim() && process.env.META_WHATSAPP_PHONE_NUMBER_ID?.trim());
+  const webhookReady = Boolean(process.env.META_WHATSAPP_WABA_ID?.trim() && process.env.META_WEBHOOK_VERIFY_TOKEN?.trim());
   return {
-    configured,
+    configured: sendReady,
+    sendReady,
+    webhookReady,
     provider: "Meta WhatsApp Cloud API" as const,
-    message: configured ? "Credenciales listas para activar automatizaciones." : "Pendiente de credenciales de Meta.",
+    message: sendReady ? webhookReady ? "Envío y verificación de webhook configurados." : "El envío de plantillas está listo; falta completar el webhook de estados." : "Pendiente de token de acceso y Phone Number ID de Meta.",
   };
 }
 
@@ -50,7 +53,7 @@ export function buildMetaTemplatePayload(input: MetaTemplateInput): MetaTemplate
 export async function sendMetaTemplate(input: MetaTemplateInput) {
   const status = getMetaWhatsAppStatus();
   const payload = buildMetaTemplatePayload(input);
-  if (!status.configured) return { status: "not_configured" as const, payload };
+  if (!status.sendReady) return { status: "not_configured" as const, payload };
 
   const version = process.env.META_GRAPH_API_VERSION ?? "v23.0";
   const phoneNumberId = process.env.META_WHATSAPP_PHONE_NUMBER_ID!;

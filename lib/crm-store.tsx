@@ -36,6 +36,7 @@ type CrmContextValue = {
   updateDelivery: (changes: Partial<DeliveryPreferences>) => void;
   updateAutomations: (changes: Partial<CrmAutomationSettings>) => void;
   updateTemplates: (changes: Partial<CrmMessageTemplates>) => void;
+  createAgentOpportunity: (input: { customerName: string; phone: string; value: number; delivery: boolean; address?: string }) => void;
 };
 
 const CrmContext = createContext<CrmContextValue | undefined>(undefined);
@@ -107,7 +108,11 @@ export function CrmProvider({ children }: { children: ReactNode }) {
     setSettings((current) => ({ ...current, templates: { ...current.templates, ...changes } }));
   }, []);
 
-  const value = useMemo(() => ({ settings, opportunities, hydrated, moveOpportunity, updateDeliveryStatus, updateStageName, addStage, removeStage, updateDelivery, updateAutomations, updateTemplates }), [settings, opportunities, hydrated, moveOpportunity, updateDeliveryStatus, updateStageName, addStage, removeStage, updateDelivery, updateAutomations, updateTemplates]);
+  const createAgentOpportunity = useCallback((input: { customerName: string; phone: string; value: number; delivery: boolean; address?: string }) => {
+    setOpportunities((current) => [{ id: `crm-agent-${Date.now()}`, customerName: input.customerName.trim(), phone: input.phone.trim(), stageId: settings.stages.find((stage) => stage.id === "confirmed")?.id ?? settings.stages[0].id, source: "WHATSAPP", value: input.value, lastActivity: "Ahora · Agente", deliveryStatus: input.delivery ? "PENDIENTE" : undefined, address: input.address?.trim() }, ...current]);
+  }, [settings.stages]);
+
+  const value = useMemo(() => ({ settings, opportunities, hydrated, moveOpportunity, updateDeliveryStatus, updateStageName, addStage, removeStage, updateDelivery, updateAutomations, updateTemplates, createAgentOpportunity }), [settings, opportunities, hydrated, moveOpportunity, updateDeliveryStatus, updateStageName, addStage, removeStage, updateDelivery, updateAutomations, updateTemplates, createAgentOpportunity]);
 
   return <CrmContext.Provider value={value}>{children}</CrmContext.Provider>;
 }

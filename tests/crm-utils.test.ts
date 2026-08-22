@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { calculateDeliveryFee } from "../lib/crm-utils";
-import { buildMetaTemplatePayload, getMetaWhatsAppStatus } from "../server/meta-whatsapp";
+import { buildMetaTemplatePayload, getMetaWhatsAppStatus, sendMetaTemplate } from "../server/meta-whatsapp";
 
 const delivery = { enabled: true, baseFee: 4500, freeShippingAbove: 60000, zones: "Centro" };
 
@@ -26,5 +26,17 @@ describe("reglas configurables del CRM", () => {
 
   it("indica que Meta sigue pendiente sin credenciales", () => {
     expect(getMetaWhatsAppStatus().provider).toBe("Meta WhatsApp Cloud API");
+  });
+
+  it("mantiene el envío bloqueado de forma segura sin credenciales", async () => {
+    const keys = ["META_WHATSAPP_ACCESS_TOKEN", "META_WHATSAPP_PHONE_NUMBER_ID"] as const;
+    const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
+    keys.forEach((key) => delete process.env[key]);
+    try {
+      const result = await sendMetaTemplate({ to: "+57 300 555 0183", templateName: "crm_bienvenida", parameters: ["Valentina"] });
+      expect(result.status).toBe("not_configured");
+    } finally {
+      keys.forEach((key) => { if (previous[key]) process.env[key] = previous[key]; });
+    }
   });
 });

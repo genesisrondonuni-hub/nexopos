@@ -1,11 +1,12 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router } from "expo-router";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Card, colors, formatCOP, MetricCard, SectionTitle, StatusPill } from "@/components/nexo-ui";
 import { ScreenContainer } from "@/components/screen-container";
 import { haptic } from "@/lib/haptics";
 import { useCrm } from "@/lib/crm-store";
+import { trpc } from "@/lib/trpc";
 import type { SalesOpportunity } from "@/shared/crm-types";
 
 function deliveryLabel(status?: SalesOpportunity["deliveryStatus"]) {
@@ -17,6 +18,8 @@ function deliveryLabel(status?: SalesOpportunity["deliveryStatus"]) {
 
 export default function CrmScreen() {
   const { settings, opportunities, moveOpportunity, updateDeliveryStatus } = useCrm();
+  const metaStatus = trpc.crm.metaStatus.useQuery();
+  const sendTemplate = trpc.crm.sendTemplate.useMutation();
   const openPipeline = opportunities.filter((opportunity) => opportunity.stageId !== settings.stages[settings.stages.length - 1]?.id);
   const pipelineValue = openPipeline.reduce((sum, opportunity) => sum + opportunity.value, 0);
   const readyForDelivery = opportunities.filter((opportunity) => opportunity.deliveryStatus === "PENDIENTE").length;
@@ -29,12 +32,22 @@ export default function CrmScreen() {
     moveOpportunity(opportunity.id, next.id);
   };
 
-  const progressDelivery = (opportunity: SalesOpportunity) => {
+  const sendMetaMessage = async (opportunity: SalesOpportunity, templateName: string, parameters: string[]) => {
+    if (!metaStatus.data?.sendReady) { Alert.alert("Meta WhatsApp no está activo", "Registra el token y el Phone Number ID en Integraciones para enviar plantillas reales.", [{ text: "Ir a integraciones", onPress: () => router.push("/api-integrations" as never) }, { text: "Cancelar", style: "cancel" }]); return; }
+    try {
+      const result = await sendTemplate.mutateAsync({ to: opportunity.phone, templateName, parameters, language: "es_CO" });
+      if (result.status === "sent") { haptic.success(); Alert.alert("Mensaje enviado", `La plantilla ${templateName} se envió a ${opportunity.customerName}.`); }
+    } catch {
+      Alert.alert("No fue posible enviar", "Revisa que la plantilla esté aprobada por Meta y que sus variables coincidan con la configuración.");
+    }
+  };
+  const progressDelivery = async (opportunity: SalesOpportunity) => {
     if (!opportunity.deliveryStatus) return;
     const next = opportunity.deliveryStatus === "PENDIENTE" ? "EN RUTA" : opportunity.deliveryStatus === "EN RUTA" ? "ENTREGADO" : "ENTREGADO";
     if (next === opportunity.deliveryStatus) return;
     haptic.medium();
     updateDeliveryStatus(opportunity.id, next);
+    if (settings.automations.enabled && settings.automations.deliveryStatusUpdate) await sendMetaMessage(opportunity, settings.templates.deliveryUpdate, [opportunity.customerName, next]);
   };
 
   const renderOpportunity = ({ item }: { item: SalesOpportunity }) => {
@@ -45,11 +58,11 @@ export default function CrmScreen() {
       <View style={styles.opportunityTop}><View><Text style={styles.customerName}>{item.customerName}</Text><Text style={styles.customerMeta}>{item.source} · {item.lastActivity}</Text></View><View style={[styles.stage, { backgroundColor: `${stage.color}20` }]}><View style={[styles.stageDot, { backgroundColor: stage.color }]} /><Text style={[styles.stageText, { color: stage.color }]}>{stage.name}</Text></View></View>
       <View style={styles.opportunityMiddle}><View style={styles.phone}><MaterialIcons name="chat" size={15} color={colors.green} /><Text style={styles.phoneText}>{item.phone}</Text></View><Text style={styles.value}>{formatCOP(item.value)}</Text></View>
       {delivery ? <View style={styles.deliveryRow}><View style={[styles.deliveryPill, { backgroundColor: delivery.bg }]}><MaterialIcons name="two-wheeler" size={14} color={delivery.color} /><Text style={[styles.deliveryText, { color: delivery.color }]}>{delivery.label}</Text></View><Text numberOfLines={1} style={styles.address}>{item.address}</Text>{item.deliveryStatus !== "ENTREGADO" ? <Pressable onPress={() => progressDelivery(item)} style={({ pressed }) => [styles.deliveryAction, pressed && styles.pressed]}><MaterialIcons name="arrow-forward" size={15} color={colors.green} /></Pressable> : null}</View> : null}
-      <View style={styles.actions}><Pressable onPress={() => undefined} style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}><MaterialIcons name="chat-bubble-outline" size={15} color={colors.green} /><Text style={styles.secondaryLabel}>Contactar</Text></Pressable><Pressable disabled={finalStage} onPress={() => advance(item)} style={({ pressed }) => [styles.advanceButton, finalStage && styles.disabledButton, pressed && !finalStage && styles.pressed]}><Text style={styles.advanceLabel}>{finalStage ? "Cerrado" : "Avanzar"}</Text><MaterialIcons name="arrow-forward" size={15} color={colors.white} /></Pressable></View>
+      <View style={styles.actions}><Pressable onPress={() => void sendMetaMessage(item, settings.templates.newLead, [item.customerName])} style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}><MaterialIcons name="chat-bubble-outline" size={15} color={colors.green} /><Text style={styles.secondaryLabel}>{sendTemplate.isPending ? "Enviando…" : "Contactar"}</Text></Pressable><Pressable disabled={finalStage} onPress={() => advance(item)} style={({ pressed }) => [styles.advanceButton, finalStage && styles.disabledButton, pressed && !finalStage && styles.pressed]}><Text style={styles.advanceLabel}>{finalStage ? "Cerrado" : "Avanzar"}</Text><MaterialIcons name="arrow-forward" size={15} color={colors.white} /></Pressable></View>
     </Card>;
   };
 
-  return <ScreenContainer containerClassName="bg-[#F6F3EE]" className="px-5"><FlatList data={opportunities} renderItem={renderOpportunity} keyExtractor={(item) => item.id} showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} ListHeaderComponent={<><View style={styles.header}><View><Text style={styles.eyebrow}>VENTAS Y RELACIONES</Text><Text style={styles.title}>CRM</Text></View><Pressable onPress={() => router.push("/crm-settings" as never)} style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}><MaterialIcons name="tune" size={20} color={colors.green} /></Pressable></View><View style={styles.metrics}><MetricCard label="Pipeline abierto" value={formatCOP(pipelineValue, true)} icon="trending-up" helper={`${openPipeline.length} oportunidades`} /><MetricCard label="Para delivery" value={String(readyForDelivery)} icon="two-wheeler" tone="gold" helper={settings.delivery.enabled ? "Servicio activo" : "Servicio pausado"} /></View><SectionTitle title="Pipeline" action="Configurar" onAction={() => router.push("/crm-settings" as never)} /><View style={styles.stageSummary}>{settings.stages[0] ? <View style={[styles.stageSummaryChip, { borderColor: settings.stages[0].color }]}><Text style={[styles.stageSummaryText, { color: settings.stages[0].color }]}>{settings.stages[0].name}</Text><Text style={styles.stageSummaryCount}>{opportunities.filter((entry) => entry.stageId === settings.stages[0].id).length}</Text></View> : null}{settings.stages[1] ? <View style={[styles.stageSummaryChip, { borderColor: settings.stages[1].color }]}><Text style={[styles.stageSummaryText, { color: settings.stages[1].color }]}>{settings.stages[1].name}</Text><Text style={styles.stageSummaryCount}>{opportunities.filter((entry) => entry.stageId === settings.stages[1].id).length}</Text></View> : null}{settings.stages[2] ? <View style={[styles.stageSummaryChip, { borderColor: settings.stages[2].color }]}><Text style={[styles.stageSummaryText, { color: settings.stages[2].color }]}>{settings.stages[2].name}</Text><Text style={styles.stageSummaryCount}>{opportunities.filter((entry) => entry.stageId === settings.stages[2].id).length}</Text></View> : null}</View><SectionTitle title="Oportunidades" /></>} /></ScreenContainer>;
+  return <ScreenContainer containerClassName="bg-[#F6F3EE]" className="px-5"><FlatList data={opportunities} renderItem={renderOpportunity} keyExtractor={(item) => item.id} showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} ListHeaderComponent={<><View style={styles.header}><View><Text style={styles.eyebrow}>VENTAS Y RELACIONES</Text><Text style={styles.title}>CRM</Text></View><View style={styles.headerActions}><Pressable onPress={() => router.push("/sales-agent" as never)} style={({ pressed }) => [styles.agentButton, pressed && styles.pressed]}><MaterialIcons name="smart-toy" size={20} color={colors.white} /></Pressable><Pressable onPress={() => router.push("/crm-settings" as never)} style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}><MaterialIcons name="tune" size={20} color={colors.green} /></Pressable></View></View><View style={styles.metrics}><MetricCard label="Pipeline abierto" value={formatCOP(pipelineValue, true)} icon="trending-up" helper={`${openPipeline.length} oportunidades`} /><MetricCard label="Para delivery" value={String(readyForDelivery)} icon="two-wheeler" tone="gold" helper={settings.delivery.enabled ? "Servicio activo" : "Servicio pausado"} /></View><Pressable onPress={() => router.push("/sales-agent" as never)} style={({ pressed }) => [styles.agentBanner, pressed && styles.pressed]}><View style={styles.agentBannerIcon}><MaterialIcons name="smart-toy" size={19} color={colors.green} /></View><View style={styles.agentBannerCopy}><Text style={styles.agentBannerTitle}>Agente de ventas</Text><Text style={styles.agentBannerText}>Responde, propone pedidos y crea seguimiento en el CRM.</Text></View><MaterialIcons name="chevron-right" size={20} color={colors.green} /></Pressable><SectionTitle title="Pipeline" action="Configurar" onAction={() => router.push("/crm-settings" as never)} /><View style={styles.stageSummary}>{settings.stages[0] ? <View style={[styles.stageSummaryChip, { borderColor: settings.stages[0].color }]}><Text style={[styles.stageSummaryText, { color: settings.stages[0].color }]}>{settings.stages[0].name}</Text><Text style={styles.stageSummaryCount}>{opportunities.filter((entry) => entry.stageId === settings.stages[0].id).length}</Text></View> : null}{settings.stages[1] ? <View style={[styles.stageSummaryChip, { borderColor: settings.stages[1].color }]}><Text style={[styles.stageSummaryText, { color: settings.stages[1].color }]}>{settings.stages[1].name}</Text><Text style={styles.stageSummaryCount}>{opportunities.filter((entry) => entry.stageId === settings.stages[1].id).length}</Text></View> : null}{settings.stages[2] ? <View style={[styles.stageSummaryChip, { borderColor: settings.stages[2].color }]}><Text style={[styles.stageSummaryText, { color: settings.stages[2].color }]}>{settings.stages[2].name}</Text><Text style={styles.stageSummaryCount}>{opportunities.filter((entry) => entry.stageId === settings.stages[2].id).length}</Text></View> : null}</View><SectionTitle title="Oportunidades" /></>} /></ScreenContainer>;
 }
 
 const styles = StyleSheet.create({
@@ -58,6 +71,13 @@ const styles = StyleSheet.create({
   eyebrow: { color: colors.muted, fontSize: 11, fontWeight: "800", letterSpacing: 0.7 },
   title: { color: colors.ink, fontSize: 28, fontWeight: "800", letterSpacing: -0.7, marginTop: 3 },
   settingsButton: { alignItems: "center", backgroundColor: colors.mint, borderRadius: 14, height: 44, justifyContent: "center", width: 44 },
+  headerActions: { flexDirection: "row", gap: 8 },
+  agentButton: { alignItems: "center", backgroundColor: colors.green, borderRadius: 14, height: 44, justifyContent: "center", width: 44 },
+  agentBanner: { alignItems: "center", backgroundColor: colors.white, borderColor: "#B5E0CF", borderRadius: 14, borderWidth: 1, flexDirection: "row", gap: 9, padding: 11 },
+  agentBannerIcon: { alignItems: "center", backgroundColor: colors.mint, borderRadius: 11, height: 37, justifyContent: "center", width: 37 },
+  agentBannerCopy: { flex: 1 },
+  agentBannerTitle: { color: colors.ink, fontSize: 12, fontWeight: "800" },
+  agentBannerText: { color: colors.muted, fontSize: 10, marginTop: 3 },
   metrics: { flexDirection: "row", gap: 12, justifyContent: "space-between" },
   stageSummary: { flexDirection: "row", gap: 8, marginBottom: 6 },
   stageSummaryChip: { alignItems: "center", backgroundColor: colors.white, borderRadius: 11, borderWidth: 1, flex: 1, gap: 3, minHeight: 54, justifyContent: "center", paddingHorizontal: 6 },

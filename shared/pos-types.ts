@@ -17,6 +17,18 @@ export interface Product {
   type: "FINAL" | "RECIPE" | "SERVICE";
 }
 
+export type ProductMovementType = "CREACIÓN" | "AJUSTE" | "IMPORTACIÓN" | "REVERSIÓN" | "VENTA_POS" | "VENTA_AGENTE";
+
+export interface ProductMovement {
+  id: string;
+  productId: string;
+  type: ProductMovementType;
+  label: string;
+  quantityDelta?: number;
+  stockAfter?: number;
+  createdAt: string;
+}
+
 export interface CartItem {
   id: string;
   productId?: string;
@@ -39,7 +51,7 @@ export interface Order {
   customerName: string;
   customerPhone?: string;
   status: OrderStatus;
-  source: "POS" | "CATÁLOGO";
+  source: "POS" | "CATÁLOGO" | "AGENTE";
   delivery: "Mesa" | "Recogida" | "Domicilio";
   deliveryAddress?: string;
   deliveryFee?: number;

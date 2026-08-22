@@ -4,8 +4,9 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as nexo from "./nexo-store";
-import { buildMetaTemplatePayload, getMetaWhatsAppStatus } from "./meta-whatsapp";
+import { buildMetaTemplatePayload, getMetaWhatsAppStatus, sendMetaTemplate } from "./meta-whatsapp";
 import { analyzeBusiness, getGeminiStatus } from "./gemini";
+import { respondWithSalesAgent } from "./sales-agent";
 import { completeGoogleSheetsAuthorization, getGoogleSheetsStatus, readGoogleSheetValues, startGoogleSheetsAuthorization } from "./google-sheets";
 
 const orderItemSchema = z.object({
@@ -71,6 +72,12 @@ export const appRouter = router({
       templateName: z.string().min(1).max(512),
       parameters: z.array(z.string().max(1024)).max(10),
     })).query(({ input }) => buildMetaTemplatePayload(input)),
+    sendTemplate: publicProcedure.input(z.object({
+      to: z.string().min(8).max(30),
+      templateName: z.string().min(1).max(512),
+      parameters: z.array(z.string().max(1024)).max(10),
+      language: z.string().regex(/^[a-z]{2}_[A-Z]{2}$/).default("es_CO"),
+    })).mutation(({ input }) => sendMetaTemplate(input)),
   }),
   gemini: router({
     status: publicProcedure.input(z.object({ modelPreference: z.string().trim().min(1).max(120).default("AUTO") })).query(({ input }) => getGeminiStatus(input.modelPreference)),
@@ -80,6 +87,15 @@ export const appRouter = router({
       opportunities: z.array(z.object({ stageId: z.string().min(1).max(80), source: z.string().min(1).max(80), value: z.number().nonnegative(), deliveryStatus: z.string().max(80).optional() })).max(500),
       modelPreference: z.string().trim().min(1).max(120).default("AUTO"),
     })).mutation(({ input }) => analyzeBusiness(input, input.modelPreference)),
+  }),
+  salesAgent: router({
+    respond: publicProcedure.input(z.object({
+      businessName: z.string().min(1).max(120),
+      profileId: z.enum(["RESTAURANT", "FAST_FOOD", "SUPERMARKET", "GROCERY", "WAREHOUSE", "LIQUOR_STORE"]),
+      features: z.object({ recipes: z.boolean(), tables: z.boolean(), barcode: z.boolean(), wholesalePricing: z.boolean(), delivery: z.boolean(), catalog: z.boolean(), ageCheck: z.boolean(), weightedProducts: z.boolean() }),
+      products: z.array(z.object({ id: z.string().min(1), name: z.string().min(1).max(120), category: z.string().min(1).max(80), description: z.string().max(500), price: z.number().nonnegative(), stock: z.number().nonnegative(), code: z.string().min(1).max(40) })).max(500),
+      customerMessage: z.string().trim().min(1).max(2000),
+    })).mutation(({ input }) => respondWithSalesAgent(input)),
   }),
   googleSheets: router({
     status: publicProcedure.query(() => getGoogleSheetsStatus()),

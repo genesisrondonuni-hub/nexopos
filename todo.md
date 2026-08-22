@@ -67,3 +67,14 @@
 - [x] Implementar la edición de productos existentes con validaciones de código.
 - [x] Permitir asignar y visualizar imágenes específicas en los productos.
 - [x] Validar los flujos de búsqueda, edición e imágenes de inventario.
+- [x] Añadir una pantalla de detalle de producto con historial de movimientos operativos.
+- [x] Implementar la importación masiva de imágenes enlazadas por código de producto.
+- [x] Preparar las acciones de CRM y los estados de integración para activar Gemini y Meta sin exponer secretos.
+- [ ] Activar la integración real de Gemini mediante una clave segura del servidor.
+- [ ] Activar la conexión oficial de Meta WhatsApp Cloud API con credenciales seguras del servidor.
+- [ ] Registrar las credenciales de Gemini y Meta WhatsApp únicamente al finalizar las demás mejoras.
+- [ ] Validar el detalle de producto, la importación de imágenes y las integraciones activadas.
+- [x] Definir las reglas comerciales y los límites seguros del agente de ventas por perfil de negocio.
+- [x] Implementar un agente Gemini que proponga respuestas y acciones estructuradas para ventas y delivery.
+- [x] Crear la experiencia CRM para atender conversaciones, confirmar pedidos y coordinar delivery con el agente.
+- [x] Validar los flujos del agente para restaurante, comida rápida, supermercado, abasto, bodega y licorería.
