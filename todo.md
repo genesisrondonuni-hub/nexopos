@@ -171,4 +171,4 @@
 - [x] Registrar y consultar un historial auditable de tasas USD/VES manuales.
 - [x] Implementar conciliación de cambios y resolución guiada de conflictos multi-caja.
 - [x] Añadir la preparación administrativa para proveedores fiscales autorizados sin emisión activa.
-- [ ] Validar y sincronizar las mejoras de tasa, conciliación y fiscalidad con GitHub.
+- [x] Validar y sincronizar las mejoras de tasa, conciliación y fiscalidad con GitHub.
