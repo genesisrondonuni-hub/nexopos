@@ -132,3 +132,4 @@
 - [x] Incorporar alertas visuales de demora en la Pantalla de Cocina.
 - [x] Registrar y mostrar historial de tiempos de preparación por producto.
 - [x] Validar y sincronizar las mejoras avanzadas de cocina con GitHub.
+- [x] Reiniciar y comprobar el servidor de desarrollo tras la nueva interrupción reportada.
