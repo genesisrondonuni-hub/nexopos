@@ -86,3 +86,7 @@
 - [x] Validar las nuevas políticas de atención, escalamiento, cancelación y webhook antes de activar credenciales.
 - [x] Completar el lector de códigos de barras por cámara en el POS con ingreso manual de respaldo.
 - [x] Validar que el escaneo identifica el producto y lo añade correctamente al carrito.
+- [x] Permitir registrar y validar códigos EAN y UPC reales en productos.
+- [x] Ofrecer la creación de un producto nuevo cuando el código escaneado no exista.
+- [x] Añadir una guía de prueba del lector con cámara desde un dispositivo físico.
+- [x] Validar los flujos de códigos reales y creación desde escaneo.
