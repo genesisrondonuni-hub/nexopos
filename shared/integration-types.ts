@@ -1,14 +1,24 @@
+import type { GeminiAnalysis } from "./gemini-analysis";
+
+export type GeminiAnalysisRecord = {
+  generatedAt: string;
+  model: string;
+  analysis: GeminiAnalysis;
+};
+
 export type GeminiIntegrationSettings = {
   enabled: boolean;
   modelPreference: string;
   analyzeInventory: boolean;
   analyzeSales: boolean;
   analyzeCrm: boolean;
+  history: GeminiAnalysisRecord[];
 };
 
 export type GoogleSheetsIntegrationSettings = {
   spreadsheetId: string;
   sheetName: string;
+  connectionId?: string;
 };
 
 export type IntegrationSettings = {
@@ -23,6 +33,7 @@ export const defaultIntegrationSettings: IntegrationSettings = {
     analyzeInventory: true,
     analyzeSales: true,
     analyzeCrm: true,
+    history: [],
   },
   googleSheets: {
     spreadsheetId: "",

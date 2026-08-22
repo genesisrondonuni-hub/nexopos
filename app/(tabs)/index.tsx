@@ -5,6 +5,8 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Card, colors, formatCOP, MetricCard, PrimaryButton, SectionTitle, StatusPill } from "@/components/nexo-ui";
 import { ScreenContainer } from "@/components/screen-container";
 import { useNexo } from "@/lib/pos-store";
+import { useBusiness } from "@/lib/business-store";
+import { BUSINESS_EXPERIENCES } from "@/shared/business-experience";
 
 function ActivityRow({ title, detail, amount, status }: { title: string; detail: string; amount: number; status: "PENDIENTE" | "EN PROCESO" | "PAGADO" | "ARCHIVADO" }) {
   return (
@@ -18,19 +20,21 @@ function ActivityRow({ title, detail, amount, status }: { title: string; detail:
 
 export default function DashboardScreen() {
   const { summary, orders, products } = useNexo();
+  const { configuration, profile } = useBusiness();
+  const experience = BUSINESS_EXPERIENCES[profile.id];
   const lowStock = products.filter((product) => product.stock <= product.minStock).length;
 
   return (
     <ScreenContainer containerClassName="bg-[#F6F3EE]" className="px-5">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <View><Text style={styles.eyebrow}>SÁBADO, 21 DE AGOSTO</Text><Text style={styles.title}>Hola, Nexo Café</Text></View>
-          <View style={styles.avatar}><Text style={styles.avatarText}>NC</Text></View>
+          <View><Text style={[styles.eyebrow, { color: experience.accent }]}>{profile.shortLabel.toUpperCase()} · OPERACIÓN DE HOY</Text><Text style={styles.title}>Hola, {configuration.businessName}</Text></View>
+          <View style={[styles.avatar, { backgroundColor: experience.accent }]}><Text style={styles.avatarText}>{configuration.businessName.split(" ").map((word) => word[0]).join("").slice(0, 2).toUpperCase()}</Text></View>
         </View>
 
-        <View style={styles.cashBanner}>
-          <View style={styles.cashIcon}><MaterialIcons name="point-of-sale" size={20} color={colors.white} /></View>
-          <View style={styles.cashCopy}><Text style={styles.cashTitle}>Caja abierta</Text><Text style={styles.cashDescription}>Turno iniciado a las 8:00 a. m.</Text></View>
+        <View style={[styles.cashBanner, { backgroundColor: experience.accent }]}>
+          <View style={styles.cashIcon}><MaterialIcons name={profile.icon as never} size={20} color={colors.white} /></View>
+          <View style={styles.cashCopy}><Text style={styles.cashTitle}>{experience.posLabel}</Text><Text style={styles.cashDescription}>{experience.headline}</Text></View>
           <View><Text style={styles.cashAmount}>{formatCOP(150000)}</Text><Text style={styles.cashLabel}>Base inicial</Text></View>
         </View>
 

@@ -54,3 +54,11 @@
 - [ ] Validar el historial, OAuth de Sheets y Gemini de extremo a extremo.
 - [x] Priorizar el historial y la reversión de importaciones antes de completar OAuth de Google Sheets privadas.
 - [x] Preparar la pantalla y los parámetros administrativos para OAuth de Google Sheets privadas.
+- [ ] Registrar de forma segura las credenciales OAuth de Google y la clave válida de Gemini para activar las integraciones.
+- [x] Implementar los endpoints y estados de OAuth de Google Sheets sin activar credenciales todavía.
+- [x] Preparar los estados de análisis de Gemini y las validaciones locales antes de registrar la clave.
+- [x] Definir la identidad visual y contenidos específicos para cada perfil de negocio.
+- [x] Implementar variaciones de interfaz para restaurante, comida rápida, supermercado, abasto, bodega y licorería.
+- [x] Añadir código único, nombre y descripción a los productos y sus validaciones.
+- [x] Incorporar código de producto en inventario, POS, catálogo e importaciones.
+- [x] Validar los perfiles visuales y la gestión de códigos de producto.

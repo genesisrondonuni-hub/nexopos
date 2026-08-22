@@ -1,7 +1,10 @@
 import type { Product } from "./pos-types";
+import { createProductCode, isValidProductCode, normalizeProductCode } from "./product-code";
 
 export type ImportedInventoryProduct = {
+  code: string;
   name: string;
+  description: string;
   category: string;
   price: number;
   cost: number;
@@ -29,7 +32,7 @@ export function applyInventoryImport(current: Product[], importedProducts: Impor
   let created = 0;
   let updated = 0;
   importedProducts.forEach((item, index) => {
-    const existingIndex = next.findIndex((product) => product.name.toLocaleLowerCase() === item.name.toLocaleLowerCase());
+    const existingIndex = next.findIndex((product) => product.code === item.code || product.name.toLocaleLowerCase() === item.name.toLocaleLowerCase());
     if (existingIndex >= 0) {
       const before = next[existingIndex];
       const after = { ...before, ...item };
@@ -58,7 +61,9 @@ export function revertInventoryImport(current: Product[], record: InventoryImpor
 }
 
 const headerAliases: Record<string, keyof ImportedInventoryProduct> = {
+  codigo: "code", code: "code", sku: "code", referencia: "code", reference: "code",
   nombre: "name", name: "name", producto: "name", product: "name",
+  descripcion: "description", description: "description", detalle: "description",
   categoria: "category", category: "category",
   precio: "price", price: "price", venta: "price",
   costo: "cost", cost: "cost",
@@ -119,16 +124,20 @@ export function previewInventoryRows(rows: unknown[][]): InventoryImportPreview 
   rows.slice(1).forEach((row, sourceIndex) => {
     const rowNumber = sourceIndex + 2;
     const name = String(field(row, "name") ?? "").trim();
+    const rawCode = String(field(row, "code") ?? "").trim();
+    const code = rawCode ? normalizeProductCode(rawCode) : createProductCode(name, sourceIndex);
+    const description = String(field(row, "description") ?? `Producto de ${String(field(row, "category") ?? "General").trim() || "General"}`).trim();
     const category = String(field(row, "category") ?? "General").trim() || "General";
     const price = parseNumber(field(row, "price"), -1);
     const cost = parseNumber(field(row, "cost"));
     const stock = parseNumber(field(row, "stock"));
     const minStock = parseNumber(field(row, "minStock"));
-    if (!name || price < 0 || cost < 0 || stock < 0 || minStock < 0) { issues.push({ row: rowNumber, message: "Nombre, precio, costo y existencias deben ser válidos y no negativos.", severity: "error" }); return; }
-    const key = `${name.toLocaleLowerCase()}::${category.toLocaleLowerCase()}`;
+    if (!name || !isValidProductCode(code) || price < 0 || cost < 0 || stock < 0 || minStock < 0) { issues.push({ row: rowNumber, message: "Código, nombre, precio, costo y existencias deben ser válidos y no negativos.", severity: "error" }); return; }
+    if (!rawCode) issues.push({ row: rowNumber, message: `No se proporcionó código; se generó ${code}.`, severity: "warning" });
+    const key = code;
     if (seen.has(key)) { duplicateCount += 1; issues.push({ row: rowNumber, message: "Producto repetido en el archivo; se omitió esta fila.", severity: "warning" }); return; }
     seen.add(key);
-    products.push({ name, category, price, cost, stock, minStock, showInCatalog: parseBoolean(field(row, "showInCatalog") ?? "sí") });
+    products.push({ code, name, description, category, price, cost, stock, minStock, showInCatalog: parseBoolean(field(row, "showInCatalog") ?? "sí") });
   });
   return { products, issues, duplicateCount };
 }

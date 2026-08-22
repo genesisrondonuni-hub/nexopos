@@ -4,14 +4,15 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { DEFAULT_SHOP_WHATSAPP_NUMBER, isValidWhatsAppNumber, normalizeWhatsAppNumber } from "@/lib/whatsapp";
 import type { CartItem, DailySummary, Order, OrderStatus, PaymentSplit, Product } from "@/shared/pos-types";
 import { applyInventoryImport, revertInventoryImport, type ImportedInventoryProduct, type InventoryImportRecord } from "@/shared/inventory-import";
+import { createProductCode, isValidProductCode, normalizeProductCode } from "@/shared/product-code";
 
 const starterProducts: Product[] = [
-  { id: "p-arepa", name: "Arepa de queso", category: "Entradas", price: 8500, cost: 2900, stock: 32, minStock: 10, showInCatalog: true, type: "FINAL" },
-  { id: "p-bowl", name: "Bowl campesino", category: "Platos", price: 21500, cost: 8200, stock: 14, minStock: 8, showInCatalog: true, type: "RECIPE" },
-  { id: "p-hamb", name: "Hamburguesa Nexo", category: "Platos", price: 26900, cost: 10600, stock: 8, minStock: 8, showInCatalog: true, type: "RECIPE" },
-  { id: "p-limo", name: "Limonada natural", category: "Bebidas", price: 7500, cost: 1800, stock: 28, minStock: 10, showInCatalog: true, type: "FINAL" },
-  { id: "p-cafe", name: "Café americano", category: "Bebidas", price: 5200, cost: 900, stock: 45, minStock: 12, showInCatalog: true, type: "FINAL" },
-  { id: "p-postre", name: "Torta de chocolate", category: "Postres", price: 9800, cost: 3400, stock: 6, minStock: 6, showInCatalog: false, type: "FINAL" },
+  { id: "p-arepa", code: "SKU-AREPA-001", name: "Arepa de queso", description: "Arepa artesanal rellena de queso.", category: "Entradas", price: 8500, cost: 2900, stock: 32, minStock: 10, showInCatalog: true, type: "FINAL" },
+  { id: "p-bowl", code: "SKU-BOWL-002", name: "Bowl campesino", description: "Bowl caliente con ingredientes del día.", category: "Platos", price: 21500, cost: 8200, stock: 14, minStock: 8, showInCatalog: true, type: "RECIPE" },
+  { id: "p-hamb", code: "SKU-HAMB-003", name: "Hamburguesa Nexo", description: "Hamburguesa de la casa con acompañamiento.", category: "Platos", price: 26900, cost: 10600, stock: 8, minStock: 8, showInCatalog: true, type: "RECIPE" },
+  { id: "p-limo", code: "SKU-LIMO-004", name: "Limonada natural", description: "Limonada fresca preparada al momento.", category: "Bebidas", price: 7500, cost: 1800, stock: 28, minStock: 10, showInCatalog: true, type: "FINAL" },
+  { id: "p-cafe", code: "SKU-CAFE-005", name: "Café americano", description: "Café americano de tostión media.", category: "Bebidas", price: 5200, cost: 900, stock: 45, minStock: 12, showInCatalog: true, type: "FINAL" },
+  { id: "p-postre", code: "SKU-TORTA-006", name: "Torta de chocolate", description: "Porción de torta de chocolate artesanal.", category: "Postres", price: 9800, cost: 3400, stock: 6, minStock: 6, showInCatalog: false, type: "FINAL" },
 ];
 
 const starterOrders: Order[] = [
@@ -99,6 +100,8 @@ type NexoContextValue = {
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   toggleCatalog: (productId: string) => void;
   updateProductCategory: (productId: string, category: string) => void;
+  createProduct: (product: Omit<Product, "id">) => { created: boolean; reason?: string };
+  updateProductDetails: (productId: string, changes: Pick<Product, "code" | "name" | "description" | "category" | "price" | "cost" | "stock" | "minStock">) => { updated: boolean; reason?: string };
   upsertImportedProducts: (products: ImportedInventoryProduct[], source?: string) => { created: number; updated: number; importId: string };
   importHistory: InventoryImportRecord[];
   revertImport: (importId: string) => { reverted: boolean; reason?: string };
@@ -123,7 +126,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
         const saved = await AsyncStorage.getItem(STORAGE_KEY);
         if (!saved) return;
         const state = JSON.parse(saved) as { products?: Product[]; orders?: Order[]; summary?: DailySummary; businessSettings?: BusinessSettings; importHistory?: InventoryImportRecord[] };
-        if (state.products) setProducts(state.products);
+        if (state.products) setProducts(state.products.map((product, index) => ({ ...product, code: isValidProductCode(product.code ?? "") ? product.code : createProductCode(product.name, index), description: product.description?.trim() || `Producto de ${product.category}` })));
         if (state.orders) setOrders(state.orders);
         if (state.summary) setSummary(state.summary);
         if (state.businessSettings && isValidWhatsAppNumber(state.businessSettings.whatsappNumber)) {
@@ -149,7 +152,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     setCart((current) => {
       const found = current.find((item) => item.productId === product.id);
       if (found) return current.map((item) => item.id === found.id ? { ...item, quantity: item.quantity + 1 } : item);
-      return [...current, { id: `cart-${Date.now()}`, productId: product.id, name: product.name, quantity: 1, unitPrice: product.price, isFreeSale: false }];
+      return [...current, { id: `cart-${Date.now()}`, productId: product.id, productCode: product.code, name: product.name, quantity: 1, unitPrice: product.price, isFreeSale: false }];
     });
   }, []);
 
@@ -168,7 +171,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     setCatalogCart((current) => {
       const found = current.find((item) => item.productId === product.id);
       if (found) return current.map((item) => item.id === found.id ? { ...item, quantity: item.quantity + 1 } : item);
-      return [...current, { id: `shop-${Date.now()}`, productId: product.id, name: product.name, quantity: 1, unitPrice: product.price, isFreeSale: false }];
+      return [...current, { id: `shop-${Date.now()}`, productId: product.id, productCode: product.code, name: product.name, quantity: 1, unitPrice: product.price, isFreeSale: false }];
     });
   }, []);
 
@@ -249,6 +252,23 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     setProducts((current) => current.map((product) => product.id === productId ? { ...product, category: normalized } : product));
   }, []);
 
+  const createProduct = useCallback((product: Omit<Product, "id">) => {
+    const code = normalizeProductCode(product.code);
+    if (!isValidProductCode(code)) return { created: false, reason: "El código debe tener entre 2 y 32 caracteres alfanuméricos." };
+    if (!product.name.trim() || !product.description.trim()) return { created: false, reason: "Ingresa un nombre y una descripción para el producto." };
+    if (products.some((entry) => entry.code === code)) return { created: false, reason: "Ya existe un producto con este código." };
+    setProducts((current) => [...current, { ...product, id: `product-${Date.now()}`, code, name: product.name.trim(), description: product.description.trim() }]);
+    return { created: true };
+  }, [products]);
+
+  const updateProductDetails = useCallback((productId: string, changes: Pick<Product, "code" | "name" | "description" | "category" | "price" | "cost" | "stock" | "minStock">) => {
+    const code = normalizeProductCode(changes.code);
+    if (!isValidProductCode(code) || !changes.name.trim() || !changes.description.trim()) return { updated: false, reason: "Revisa el código, nombre y descripción del producto." };
+    if (products.some((entry) => entry.id !== productId && entry.code === code)) return { updated: false, reason: "Ya existe otro producto con este código." };
+    setProducts((current) => current.map((product) => product.id === productId ? { ...product, ...changes, code, name: changes.name.trim(), description: changes.description.trim() } : product));
+    return { updated: true };
+  }, [products]);
+
   const upsertImportedProducts = useCallback((importedProducts: ImportedInventoryProduct[], source = "Archivo") => {
     const result = applyInventoryImport(products, importedProducts, source);
     setProducts(result.products);
@@ -266,7 +286,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     return { reverted: true };
   }, [importHistory, products]);
 
-  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, importHistory, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, upsertImportedProducts, revertImport, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, importHistory, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, upsertImportedProducts, revertImport, hydrated]);
+  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, importHistory, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, upsertImportedProducts, revertImport, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, importHistory, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, upsertImportedProducts, revertImport, hydrated]);
 
   return <NexoContext.Provider value={value}>{children}</NexoContext.Provider>;
 }

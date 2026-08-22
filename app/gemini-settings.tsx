@@ -20,17 +20,18 @@ function PriorityCard({ priority }: { priority: GeminiPriority }) {
 export default function GeminiSettingsScreen() {
   const { products, summary } = useNexo();
   const { opportunities } = useCrm();
-  const { settings } = useIntegrations();
+  const { settings, updateGemini } = useIntegrations();
   const gemini = settings.gemini;
   const status = trpc.gemini.status.useQuery({ modelPreference: gemini.modelPreference }, { retry: false, refetchOnWindowFocus: false });
   const analyze = trpc.gemini.analyze.useMutation();
-  const [analysis, setAnalysis] = useState<GeminiAnalysis | null>(null);
+  const [analysis, setAnalysis] = useState<GeminiAnalysis | null>(gemini.history[0]?.analysis ?? null);
   const connection = status.data?.state ?? "VERIFICANDO";
   const ready = connection === "CONECTADO" && gemini.enabled && (gemini.analyzeInventory || gemini.analyzeSales || gemini.analyzeCrm);
   const runAnalysis = async () => {
     try {
       const result = await analyze.mutateAsync({ summary: gemini.analyzeSales ? summary : { sales: 0, expenses: 0, profit: 0, orders: 0 }, products: gemini.analyzeInventory ? products.map(({ name, category, stock, minStock, price, cost }) => ({ name, category, stock, minStock, price, cost })) : [], opportunities: gemini.analyzeCrm ? opportunities.map(({ stageId, source, value, deliveryStatus }) => ({ stageId, source, value, deliveryStatus })) : [], modelPreference: gemini.modelPreference });
       setAnalysis(result);
+      updateGemini({ history: [{ generatedAt: new Date().toISOString(), model: status.data?.model ?? gemini.modelPreference, analysis: result }, ...gemini.history].slice(0, 8) });
       haptic.success();
     } catch (error) { Alert.alert("No se pudo analizar", error instanceof Error ? error.message : "Verifica la configuración de Gemini."); }
   };

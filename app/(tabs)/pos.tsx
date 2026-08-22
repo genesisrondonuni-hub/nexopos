@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Card, colors, formatCOP, PrimaryButton, SoftButton } from "@/components/nexo-ui";
+import { BusinessModeBanner } from "@/components/business-mode-banner";
 import { ScreenContainer } from "@/components/screen-container";
 import { haptic } from "@/lib/haptics";
 import { useNexo } from "@/lib/pos-store";
@@ -22,7 +23,7 @@ export default function PosScreen() {
   const renderProduct = ({ item }: { item: Product }) => (
     <Pressable onPress={() => { haptic.light(); addToCart(item); }} style={({ pressed }) => [styles.product, pressed && styles.productPressed]}>
       <View style={[styles.productImage, { backgroundColor: colors.mint }]}><MaterialIcons name={configuration.features.recipes ? "restaurant" : "local-grocery-store"} size={24} color={colors.green} /></View>
-      <Text numberOfLines={2} style={styles.productName}>{item.name}</Text>
+      <Text numberOfLines={2} style={styles.productName}>{item.name}</Text><Text style={styles.productCode}>{item.code}</Text>
       <View style={styles.productFooter}><Text style={styles.productPrice}>{formatCOP(item.price)}</Text><Text style={[styles.stock, item.stock <= item.minStock && styles.lowStock]}>{item.stock} disp.</Text></View>
     </Pressable>
   );
@@ -40,7 +41,7 @@ export default function PosScreen() {
         ListHeaderComponent={
           <>
             <View style={styles.header}><View><Text style={styles.eyebrow}>{profile.shortLabel.toUpperCase()} · PUNTO DE VENTA</Text><Text style={styles.title}>Nueva venta</Text></View><Pressable onPress={() => { haptic.medium(); addFreeSale(); }} style={({ pressed }) => [styles.iconButton, pressed && styles.productPressed]}><MaterialIcons name="add" size={22} color={colors.green} /></Pressable></View>
-            <Pressable onPress={() => undefined} style={({ pressed }) => [styles.search, pressed && styles.productPressed]}><MaterialIcons name="search" size={21} color={colors.muted} /><Text style={styles.searchText}>{configuration.features.barcode ? "Buscar producto o código" : "Buscar producto o servicio"}</Text>{configuration.features.barcode ? <MaterialIcons name="qr-code-scanner" size={20} color={colors.green} /> : <MaterialIcons name="tune" size={20} color={colors.green} />}</Pressable>
+            <BusinessModeBanner area="POS" /><Pressable onPress={() => undefined} style={({ pressed }) => [styles.search, pressed && styles.productPressed]}><MaterialIcons name="search" size={21} color={colors.muted} /><Text style={styles.searchText}>{configuration.features.barcode ? "Buscar producto o código" : "Buscar producto o servicio"}</Text>{configuration.features.barcode ? <MaterialIcons name="qr-code-scanner" size={20} color={colors.green} /> : <MaterialIcons name="tune" size={20} color={colors.green} />}</Pressable>
             <FlatList horizontal data={categories} keyExtractor={(item) => item} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow} renderItem={({ item }) => <Pressable onPress={() => { haptic.light(); setActiveCategory(item); }} style={({ pressed }) => [item === selectedCategory ? styles.categoryActive : styles.category, pressed && styles.productPressed]}><Text style={item === selectedCategory ? styles.categoryActiveText : styles.categoryText}>{item}</Text></Pressable>} />
             <Card style={styles.cartPreview}>
               <View style={styles.cartTop}><View style={styles.cartCount}><MaterialIcons name="shopping-bag" size={17} color={colors.green} /><Text style={styles.cartCountText}>{cart.length ? `${cart.length} productos en la cuenta` : "La cuenta está vacía"}</Text></View><Text style={styles.cartTotal}>{formatCOP(total)}</Text></View>
@@ -78,6 +79,7 @@ const styles = StyleSheet.create({
   productPressed: { opacity: 0.72, transform: [{ scale: 0.98 }] },
   productImage: { alignItems: "center", borderRadius: 13, height: 76, justifyContent: "center" },
   productName: { color: colors.ink, fontSize: 13, fontWeight: "800", lineHeight: 17, marginTop: 10, minHeight: 34 },
+  productCode: { color: colors.green, fontSize: 9, fontWeight: "900", letterSpacing: 0.4, marginTop: 3 },
   productFooter: { alignItems: "flex-end", flexDirection: "row", justifyContent: "space-between", marginTop: 7 },
   productPrice: { color: colors.green, fontSize: 12, fontWeight: "800" },
   stock: { color: colors.muted, fontSize: 10, fontWeight: "700" },

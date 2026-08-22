@@ -4,7 +4,9 @@ export type ProductCategory = string;
 
 export interface Product {
   id: string;
+  code: string;
   name: string;
+  description: string;
   category: ProductCategory;
   price: number;
   cost: number;
@@ -17,6 +19,7 @@ export interface Product {
 export interface CartItem {
   id: string;
   productId?: string;
+  productCode?: string;
   name: string;
   quantity: number;
   unitPrice: number;

@@ -6,6 +6,7 @@ import { z } from "zod";
 import * as nexo from "./nexo-store";
 import { buildMetaTemplatePayload, getMetaWhatsAppStatus } from "./meta-whatsapp";
 import { analyzeBusiness, getGeminiStatus } from "./gemini";
+import { completeGoogleSheetsAuthorization, getGoogleSheetsStatus, readGoogleSheetValues, startGoogleSheetsAuthorization } from "./google-sheets";
 
 const orderItemSchema = z.object({
   productId: z.string().min(1).optional(),
@@ -79,6 +80,12 @@ export const appRouter = router({
       opportunities: z.array(z.object({ stageId: z.string().min(1).max(80), source: z.string().min(1).max(80), value: z.number().nonnegative(), deliveryStatus: z.string().max(80).optional() })).max(500),
       modelPreference: z.string().trim().min(1).max(120).default("AUTO"),
     })).mutation(({ input }) => analyzeBusiness(input, input.modelPreference)),
+  }),
+  googleSheets: router({
+    status: publicProcedure.query(() => getGoogleSheetsStatus()),
+    startAuthorization: publicProcedure.input(z.object({ redirectUri: z.string().url().max(500) })).mutation(({ input }) => startGoogleSheetsAuthorization(input.redirectUri)),
+    completeAuthorization: publicProcedure.input(z.object({ code: z.string().min(1).max(4000), state: z.string().uuid(), redirectUri: z.string().url().max(500) })).mutation(({ input }) => completeGoogleSheetsAuthorization(input)),
+    readValues: publicProcedure.input(z.object({ connectionId: z.string().uuid(), spreadsheetId: z.string().trim().min(10).max(200), sheetName: z.string().trim().min(1).max(120) })).mutation(({ input }) => readGoogleSheetValues(input)),
   }),
 });
 
