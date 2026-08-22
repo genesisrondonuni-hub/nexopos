@@ -8,5 +8,7 @@ describe("cobro con referencia USD/VES", () => {
     expect(source).toContain("formatDualCurrency");
     expect(source).toContain("dual.ves");
     expect(source).toContain("dual.usd");
+    expect(source).toContain("usdVesRateUpdatedAt");
+    expect(source).toContain("ReceivedCurrencyPicker");
   });
 });

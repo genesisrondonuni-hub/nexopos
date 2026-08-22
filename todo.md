@@ -188,3 +188,8 @@
 - [x] Revisar el cálculo y formato monetario de la pantalla de cobro.
 - [x] Mostrar importes equivalentes USD/VES en el resumen de cobro.
 - [x] Validar y sincronizar la presentación dual en el cobro con GitHub.
+- [x] Revisar los modelos de tasa fiscal y pagos antes de ampliar el cobro dual.
+- [x] Facilitar la actualización manual de la tasa USD/VES desde el cobro.
+- [x] Mostrar fecha y referencia de la tasa junto al total dual.
+- [x] Permitir moneda recibida VES o USD en cada parte del pago mixto.
+- [ ] Validar y sincronizar las mejoras de pago dual con GitHub.
