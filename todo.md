@@ -145,3 +145,4 @@
 - [x] Generar la lista de productos por reponer según el stock mínimo.
 - [x] Validar y sincronizar el módulo de abastecimiento con GitHub.
 - [x] Reiniciar y comprobar el servidor de desarrollo tras la interrupción reportada.
+- [x] Verificar en pruebas dirigidas los filtros Pendientes y Confirmación de pedidos.

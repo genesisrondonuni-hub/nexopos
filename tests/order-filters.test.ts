@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import { filterOrders, filterLabel, statusAfterConfirmation } from "../shared/order-filters";
 
@@ -19,5 +21,12 @@ describe("filtros de pedidos", () => {
     expect(statusAfterConfirmation("PENDIENTE")).toBe("EN PROCESO");
     expect(statusAfterConfirmation("EN PROCESO")).toBe("PAGADO");
     expect(statusAfterConfirmation("PAGADO")).toBe("PAGADO");
+  });
+
+  it("conecta Pendientes y Confirmación a botones interactivos de la pantalla", () => {
+    const source = readFileSync(resolve(process.cwd(), "app/(tabs)/orders.tsx"), "utf8");
+    expect(source).toContain("onPress={() => selectFilter(filter)}");
+    expect(source).toContain("data={visibleOrders}");
+    expect(source).toContain("updateOrderStatus(item.id, nextStatus(item.status))");
   });
 });
