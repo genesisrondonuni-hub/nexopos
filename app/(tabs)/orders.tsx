@@ -1,13 +1,15 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { useState } from "react";
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Card, colors, formatCOP, StatusPill } from "@/components/nexo-ui";
 import { ScreenContainer } from "@/components/screen-container";
+import { useBusiness } from "@/lib/business-store";
+import { useCrm } from "@/lib/crm-store";
 import { haptic } from "@/lib/haptics";
 import { useNexo } from "@/lib/pos-store";
-import { useCrm } from "@/lib/crm-store";
-import { useBusiness } from "@/lib/business-store";
 import { BUSINESS_EXPERIENCES } from "@/shared/business-experience";
+import { filterLabel, filterOrders, statusAfterConfirmation, type OrderFilter } from "@/shared/order-filters";
 import type { Order, OrderStatus } from "@/shared/pos-types";
 
 function nextStatus(current: OrderStatus): OrderStatus { if (current === "PENDIENTE") return "EN PROCESO"; if (current === "EN PROCESO") return "PAGADO"; if (current === "PAGADO") return "ARCHIVADO"; return "ARCHIVADO"; }
@@ -17,42 +19,18 @@ export default function OrdersScreen() {
   const { orders, updateOrderStatus, cancelPendingOrder } = useNexo();
   const { settings } = useCrm();
   const { profile, configuration } = useBusiness();
+  const [activeFilter, setActiveFilter] = useState<OrderFilter>("TODOS");
   const experience = BUSINESS_EXPERIENCES[profile.id];
   const serviceFlow = configuration.features.appointments || configuration.features.serviceOrders;
+  const visibleOrders = filterOrders(orders, activeFilter);
+  const selectFilter = (filter: OrderFilter) => { haptic.light(); setActiveFilter(filter); };
   const renderOrder = ({ item }: { item: Order }) => <Card style={styles.orderCard}>
     <View style={styles.orderTop}><View><Text style={styles.orderCode}>{item.code}</Text><Text style={styles.customer}>{item.customerName}</Text></View><StatusPill status={item.status} /></View>
     <View style={styles.orderMeta}><View style={styles.metaItem}><MaterialIcons name={item.delivery === "Domicilio" ? "two-wheeler" : item.delivery === "Mesa" ? "table-restaurant" : "shopping-bag"} size={15} color={colors.muted} /><Text style={styles.metaText}>{item.delivery}</Text></View><View style={styles.metaItem}><MaterialIcons name={item.source === "POS" ? "point-of-sale" : "language"} size={15} color={colors.muted} /><Text style={styles.metaText}>{item.source}</Text></View><Text style={styles.metaText}>{item.createdAt}</Text></View>
-    <View style={styles.orderBottom}><Text style={styles.total}>{formatCOP(item.total)}</Text><View style={styles.orderActions}>{item.status === "PENDIENTE" && settings.agentPolicy.allowPendingCancellation ? <Pressable onPress={() => Alert.alert(`Cancelar ${experience.orderLabel.toLocaleLowerCase()}`, `Se restaurará el inventario de ${item.code}.`, [{ text: "Volver", style: "cancel" }, { text: "Cancelar", style: "destructive", onPress: () => { const result = cancelPendingOrder(item.id, settings.agentPolicy.cancellationWindowMinutes); if (!result.cancelled) Alert.alert("No se pudo cancelar", result.reason); else haptic.success(); } }])} style={({ pressed }) => [styles.cancelAction, pressed && styles.pressed]}><MaterialIcons name="close" size={15} color={colors.coral} /></Pressable> : null}<Pressable disabled={item.status === "ARCHIVADO"} onPress={() => { haptic.medium(); updateOrderStatus(item.id, nextStatus(item.status)); }} style={({ pressed }) => [styles.statusAction, item.status === "ARCHIVADO" && styles.disabledAction, pressed && item.status !== "ARCHIVADO" && styles.pressed]}><Text style={styles.statusActionText}>{item.cancelledAt ? "Cancelado" : actionLabel(item.status, serviceFlow)}</Text><MaterialIcons name="arrow-forward" size={15} color={colors.green} /></Pressable></View></View>
+    <View style={styles.orderBottom}><Text style={styles.total}>{formatCOP(item.total)}</Text><View style={styles.orderActions}>{item.status === "PENDIENTE" && settings.agentPolicy.allowPendingCancellation ? <Pressable onPress={() => Alert.alert(`Cancelar ${experience.orderLabel.toLocaleLowerCase()}`, `Se restaurará el inventario de ${item.code}.`, [{ text: "Volver", style: "cancel" }, { text: "Cancelar", style: "destructive", onPress: () => { const result = cancelPendingOrder(item.id, settings.agentPolicy.cancellationWindowMinutes); if (!result.cancelled) Alert.alert("No se pudo cancelar", result.reason); else haptic.success(); } }])} style={({ pressed }) => [styles.cancelAction, pressed && styles.pressed]}><MaterialIcons name="close" size={15} color={colors.coral} /></Pressable> : null}<Pressable disabled={item.status === "ARCHIVADO"} onPress={() => { const target = statusAfterConfirmation(item.status); if (target === item.status && item.status === "PAGADO") updateOrderStatus(item.id, "ARCHIVADO"); else updateOrderStatus(item.id, nextStatus(item.status)); haptic.success(); }} style={({ pressed }) => [styles.statusAction, item.status === "ARCHIVADO" && styles.disabledAction, pressed && item.status !== "ARCHIVADO" && styles.pressed]}><Text style={styles.statusActionText}>{item.cancelledAt ? "Cancelado" : actionLabel(item.status, serviceFlow)}</Text><MaterialIcons name="arrow-forward" size={15} color={colors.green} /></Pressable></View></View>
   </Card>;
-  return <ScreenContainer containerClassName="bg-[#F6F3EE]" className="px-5"><FlatList data={orders} renderItem={renderOrder} keyExtractor={(item) => item.id} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} ListHeaderComponent={<><View style={styles.header}><View><Text style={styles.eyebrow}>{profile.shortLabel.toUpperCase()} · OPERACIÓN DEL DÍA</Text><Text style={styles.title}>{experience.orderLabel}</Text></View><View style={styles.counter}><Text style={styles.counterValue}>{orders.filter((order) => order.status === "PENDIENTE").length}</Text><Text style={styles.counterText}>pendientes</Text></View></View><View style={styles.filters}><View style={styles.filterActive}><Text style={styles.filterActiveText}>Todos</Text></View><View style={styles.filter}><Text style={styles.filterText}>Pendientes</Text></View><View style={styles.filter}><Text style={styles.filterText}>{serviceFlow ? "Confirmación" : "En proceso"}</Text></View></View></>} /></ScreenContainer>;
+  const filters: OrderFilter[] = ["TODOS", "PENDIENTE", "EN PROCESO"];
+  return <ScreenContainer containerClassName="bg-[#F6F3EE]" className="px-5"><FlatList data={visibleOrders} renderItem={renderOrder} keyExtractor={(item) => item.id} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} ListEmptyComponent={<View style={styles.empty}><MaterialIcons name="filter-list" size={31} color={colors.muted} /><Text style={styles.emptyTitle}>No hay {filterLabel(activeFilter, serviceFlow).toLocaleLowerCase()}</Text><Text style={styles.emptyText}>Cambia el filtro para ver otros pedidos de la operación.</Text></View>} ListHeaderComponent={<><View style={styles.header}><View><Text style={styles.eyebrow}>{profile.shortLabel.toUpperCase()} · OPERACIÓN DEL DÍA</Text><Text style={styles.title}>{experience.orderLabel}</Text></View><View style={styles.counter}><Text style={styles.counterValue}>{orders.filter((order) => order.status === "PENDIENTE").length}</Text><Text style={styles.counterText}>pendientes</Text></View></View><View style={styles.filters}>{filters.map((filter) => <Pressable key={filter} onPress={() => selectFilter(filter)} style={({ pressed }) => [styles.filter, activeFilter === filter && styles.filterActive, pressed && styles.pressed]}><Text style={[styles.filterText, activeFilter === filter && styles.filterActiveText]}>{filterLabel(filter, serviceFlow)}</Text><Text style={[styles.filterCount, activeFilter === filter && styles.filterCountActive]}>{filterOrders(orders, filter).length}</Text></Pressable>)}</View></>} /></ScreenContainer>;
 }
 
-const styles = StyleSheet.create({
-  content: { gap: 11, paddingBottom: 110, paddingTop: 14 },
-  header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginBottom: 14 },
-  eyebrow: { color: colors.muted, fontSize: 11, fontWeight: "800", letterSpacing: 0.7 },
-  title: { color: colors.ink, fontSize: 28, fontWeight: "800", letterSpacing: -0.7, marginTop: 3 },
-  counter: { alignItems: "center", backgroundColor: "#FFF2D4", borderRadius: 14, paddingHorizontal: 13, paddingVertical: 8 },
-  counterValue: { color: "#A36E0A", fontSize: 16, fontWeight: "800" },
-  counterText: { color: "#A36E0A", fontSize: 9, fontWeight: "800" },
-  filters: { flexDirection: "row", gap: 8, marginBottom: 2 },
-  filter: { borderColor: colors.line, borderRadius: 999, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8 },
-  filterActive: { backgroundColor: colors.ink, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
-  filterText: { color: colors.muted, fontSize: 11, fontWeight: "800" },
-  filterActiveText: { color: colors.white, fontSize: 11, fontWeight: "800" },
-  orderCard: { gap: 12, padding: 15 },
-  orderTop: { alignItems: "flex-start", flexDirection: "row", justifyContent: "space-between" },
-  orderCode: { color: colors.green, fontSize: 12, fontWeight: "800" },
-  customer: { color: colors.ink, fontSize: 15, fontWeight: "800", marginTop: 3 },
-  orderMeta: { flexDirection: "row", flexWrap: "wrap", gap: 9 },
-  metaItem: { alignItems: "center", flexDirection: "row", gap: 4 },
-  metaText: { color: colors.muted, fontSize: 11, fontWeight: "700" },
-  orderBottom: { alignItems: "center", borderTopColor: colors.line, borderTopWidth: 1, flexDirection: "row", justifyContent: "space-between", paddingTop: 11 },
-  total: { color: colors.ink, fontSize: 17, fontWeight: "800" },
-  orderActions: { alignItems: "center", flexDirection: "row", gap: 7 },
-  cancelAction: { alignItems: "center", backgroundColor: "#FDE9E4", borderRadius: 10, height: 34, justifyContent: "center", width: 34 },
-  statusAction: { alignItems: "center", backgroundColor: colors.mint, borderRadius: 10, flexDirection: "row", gap: 5, paddingHorizontal: 10, paddingVertical: 8 },
-  statusActionText: { color: colors.green, fontSize: 11, fontWeight: "800" },
-  disabledAction: { backgroundColor: "#E8ECEA" },
-  pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
-});
+const styles = StyleSheet.create({ content: { gap: 11, paddingBottom: 110, paddingTop: 14 }, header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginBottom: 14 }, eyebrow: { color: colors.muted, fontSize: 11, fontWeight: "800", letterSpacing: 0.7 }, title: { color: colors.ink, fontSize: 28, fontWeight: "800", letterSpacing: -0.7, marginTop: 3 }, counter: { alignItems: "center", backgroundColor: "#FFF2D4", borderRadius: 14, paddingHorizontal: 13, paddingVertical: 8 }, counterValue: { color: "#A36E0A", fontSize: 16, fontWeight: "800" }, counterText: { color: "#A36E0A", fontSize: 9, fontWeight: "800" }, filters: { flexDirection: "row", gap: 8, marginBottom: 2 }, filter: { alignItems: "center", borderColor: colors.line, borderRadius: 12, borderWidth: 1, flex: 1, gap: 2, minHeight: 49, justifyContent: "center", paddingHorizontal: 5 }, filterActive: { backgroundColor: colors.ink, borderColor: colors.ink }, filterText: { color: colors.muted, fontSize: 10, fontWeight: "800", textAlign: "center" }, filterActiveText: { color: colors.white }, filterCount: { color: colors.green, fontSize: 11, fontWeight: "900" }, filterCountActive: { color: "#CDEADD" }, orderCard: { gap: 12, padding: 15 }, orderTop: { alignItems: "flex-start", flexDirection: "row", justifyContent: "space-between" }, orderCode: { color: colors.green, fontSize: 12, fontWeight: "800" }, customer: { color: colors.ink, fontSize: 15, fontWeight: "800", marginTop: 3 }, orderMeta: { flexDirection: "row", flexWrap: "wrap", gap: 9 }, metaItem: { alignItems: "center", flexDirection: "row", gap: 4 }, metaText: { color: colors.muted, fontSize: 11, fontWeight: "700" }, orderBottom: { alignItems: "center", borderTopColor: colors.line, borderTopWidth: 1, flexDirection: "row", justifyContent: "space-between", paddingTop: 11 }, total: { color: colors.ink, fontSize: 17, fontWeight: "800" }, orderActions: { alignItems: "center", flexDirection: "row", gap: 7 }, cancelAction: { alignItems: "center", backgroundColor: "#FDE9E4", borderRadius: 10, height: 34, justifyContent: "center", width: 34 }, statusAction: { alignItems: "center", backgroundColor: colors.mint, borderRadius: 10, flexDirection: "row", gap: 5, paddingHorizontal: 10, paddingVertical: 8 }, statusActionText: { color: colors.green, fontSize: 11, fontWeight: "800" }, disabledAction: { backgroundColor: "#E8ECEA" }, empty: { alignItems: "center", gap: 7, paddingTop: 42 }, emptyTitle: { color: colors.ink, fontSize: 14, fontWeight: "800" }, emptyText: { color: colors.muted, fontSize: 11, textAlign: "center" }, pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] } });

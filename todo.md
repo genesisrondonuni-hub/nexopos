@@ -137,3 +137,5 @@
 - [x] Corregir controles sin acción, rutas incompletas o flujos interrumpidos.
 - [x] Validar y sincronizar la corrección integral de interacción con GitHub.
 - [x] Reiniciar y comprobar el servidor tras la interrupción reportada.
+- [x] Corregir los controles Pendientes y Confirmación de pedidos.
+- [x] Validar y sincronizar el flujo corregido de pedidos con GitHub.
