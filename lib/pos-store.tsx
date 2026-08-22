@@ -68,6 +68,7 @@ type NexoContextValue = {
   updateWhatsAppNumber: (value: string) => boolean;
   updateActiveBranch: (branchId: string) => void;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
+  assignKitchenStation: (orderId: string, station: string) => void;
   toggleCatalog: (productId: string) => void;
   updateProductCategory: (productId: string, category: string) => void;
   createProduct: (product: Omit<Product, "id">) => { created: boolean; reason?: string };
@@ -305,7 +306,13 @@ export function NexoProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateOrderStatus = useCallback((orderId: string, status: OrderStatus) => {
-    setOrders((current) => current.map((order) => order.id === orderId ? { ...order, status } : order));
+    const timestamp = Date.now();
+    setOrders((current) => current.map((order) => order.id === orderId ? { ...order, status, kitchenStartedTimestamp: status === "EN PROCESO" ? order.kitchenStartedTimestamp ?? timestamp : order.kitchenStartedTimestamp, kitchenReadyTimestamp: status === "PAGADO" ? timestamp : order.kitchenReadyTimestamp } : order));
+  }, []);
+
+  const assignKitchenStation = useCallback((orderId: string, station: string) => {
+    const normalized = station.trim();
+    if (normalized) setOrders((current) => current.map((order) => order.id === orderId ? { ...order, kitchenStation: normalized } : order));
   }, []);
 
   const toggleCatalog = useCallback((productId: string) => {
@@ -393,7 +400,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     return { products: demo.products.length, orders: demo.orders.length };
   }, []);
 
-  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, cashSession, cashMovements, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, openCashSession, closeCashSession, recordCashMovement, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, replaceProfileDemo, hydrated }), [products, orders, cart, catalogCart, businessSettings, cashSession, cashMovements, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, openCashSession, closeCashSession, recordCashMovement, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, replaceProfileDemo, hydrated]);
+  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, cashSession, cashMovements, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, openCashSession, closeCashSession, recordCashMovement, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, assignKitchenStation, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, replaceProfileDemo, hydrated }), [products, orders, cart, catalogCart, businessSettings, cashSession, cashMovements, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, openCashSession, closeCashSession, recordCashMovement, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, assignKitchenStation, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, replaceProfileDemo, hydrated]);
 
   return <NexoContext.Provider value={value}>{children}</NexoContext.Provider>;
 }

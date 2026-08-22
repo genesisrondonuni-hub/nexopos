@@ -128,3 +128,7 @@
 - [x] Implementar y validar las mejoras priorizadas a partir del contenido adjunto.
 - [x] Priorizar mejoras compatibles del análisis arquitectónico sin migrar la aplicación móvil a una web PWA.
 - [x] Implementar y validar las mejoras operativas seleccionadas del análisis arquitectónico.
+- [x] Añadir asignación de pedidos a estaciones de cocina.
+- [x] Incorporar alertas visuales de demora en la Pantalla de Cocina.
+- [x] Registrar y mostrar historial de tiempos de preparación por producto.
+- [x] Validar y sincronizar las mejoras avanzadas de cocina con GitHub.

@@ -97,6 +97,9 @@ export interface Order {
   payments?: PaymentSplit[];
   createdAt: string;
   createdTimestamp?: number;
+  kitchenStation?: string;
+  kitchenStartedTimestamp?: number;
+  kitchenReadyTimestamp?: number;
   cancelledAt?: string;
   cancellationReason?: string;
 }
