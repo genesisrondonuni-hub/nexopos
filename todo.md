@@ -122,4 +122,4 @@
 - [x] Permitir editar productos, pedidos y citas de ejemplo antes de cargarlos.
 - [x] Añadir imágenes temáticas a los catálogos iniciales por perfil.
 - [x] Crear una agenda visual diaria para servicios y solicitudes comerciales con cita.
-- [ ] Validar las mejoras de ejemplos y sincronizarlas con GitHub.
+- [x] Validar las mejoras de ejemplos y sincronizarlas con GitHub.
