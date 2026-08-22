@@ -93,3 +93,8 @@
 - [x] Permitir importar y validar códigos de producto desde archivos Excel.
 - [x] Generar etiquetas imprimibles con código de barras para productos.
 - [x] Añadir una guía de prueba con etiquetas físicas y validar los nuevos flujos.
+- [x] Definir perfiles de salud, veterinaria, calzado y ventas en línea con límites de datos adecuados.
+- [x] Implementar los nuevos perfiles, categorías, identidad visual y módulos operativos.
+- [x] Adaptar POS, inventario, pedidos y catálogo a cada nuevo tipo de comercio.
+- [x] Configurar CRM y agente comercial con conversaciones y reglas por perfil.
+- [x] Validar los perfiles y flujos comerciales ampliados.

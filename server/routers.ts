@@ -92,8 +92,8 @@ export const appRouter = router({
   salesAgent: router({
     respond: publicProcedure.input(z.object({
       businessName: z.string().min(1).max(120),
-      profileId: z.enum(["RESTAURANT", "FAST_FOOD", "SUPERMARKET", "GROCERY", "WAREHOUSE", "LIQUOR_STORE"]),
-      features: z.object({ recipes: z.boolean(), tables: z.boolean(), barcode: z.boolean(), wholesalePricing: z.boolean(), delivery: z.boolean(), catalog: z.boolean(), ageCheck: z.boolean(), weightedProducts: z.boolean() }),
+      profileId: z.enum(["RESTAURANT", "FAST_FOOD", "SUPERMARKET", "GROCERY", "WAREHOUSE", "LIQUOR_STORE", "MEDICAL_OFFICE", "CLINICAL_LAB", "DENTAL_CLINIC", "VETERINARY_LAB", "VETERINARY_OFFICE", "SHOE_STORE", "ONLINE_STORE"]),
+      features: z.object({ recipes: z.boolean(), tables: z.boolean(), barcode: z.boolean(), wholesalePricing: z.boolean(), delivery: z.boolean(), catalog: z.boolean(), ageCheck: z.boolean(), weightedProducts: z.boolean(), appointments: z.boolean(), serviceOrders: z.boolean(), variants: z.boolean(), onlineSales: z.boolean() }),
       agentPolicy: z.object({ enabled: z.boolean(), timezone: z.string().min(1).max(80), opensAt: z.string().regex(/^\d{2}:\d{2}$/), closesAt: z.string().regex(/^\d{2}:\d{2}$/), servesSaturday: z.boolean(), servesSunday: z.boolean(), outsideHoursMessage: z.string().min(1).max(500), humanHandoffEnabled: z.boolean(), humanHandoffMessage: z.string().min(1).max(500), allowPendingCancellation: z.boolean(), cancellationWindowMinutes: z.number().int().min(0).max(1440) }),
       products: z.array(z.object({ id: z.string().min(1), name: z.string().min(1).max(120), category: z.string().min(1).max(80), description: z.string().max(500), price: z.number().nonnegative(), stock: z.number().nonnegative(), code: z.string().min(1).max(40) })).max(500),
       customerMessage: z.string().trim().min(1).max(2000),

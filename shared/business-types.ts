@@ -1,4 +1,4 @@
-export type BusinessProfileId = "RESTAURANT" | "FAST_FOOD" | "SUPERMARKET" | "GROCERY" | "WAREHOUSE" | "LIQUOR_STORE";
+export type BusinessProfileId = "RESTAURANT" | "FAST_FOOD" | "SUPERMARKET" | "GROCERY" | "WAREHOUSE" | "LIQUOR_STORE" | "MEDICAL_OFFICE" | "CLINICAL_LAB" | "DENTAL_CLINIC" | "VETERINARY_LAB" | "VETERINARY_OFFICE" | "SHOE_STORE" | "ONLINE_STORE";
 
 export type BusinessFeatures = {
   recipes: boolean;
@@ -9,6 +9,10 @@ export type BusinessFeatures = {
   catalog: boolean;
   ageCheck: boolean;
   weightedProducts: boolean;
+  appointments: boolean;
+  serviceOrders: boolean;
+  variants: boolean;
+  onlineSales: boolean;
 };
 
 export type BusinessProfileDefinition = {
@@ -16,7 +20,7 @@ export type BusinessProfileDefinition = {
   label: string;
   shortLabel: string;
   description: string;
-  icon: "restaurant" | "fastfood" | "local-grocery-store" | "shopping-basket" | "warehouse" | "liquor";
+  icon: "restaurant" | "fastfood" | "local-grocery-store" | "shopping-basket" | "warehouse" | "liquor" | "local-hospital" | "science" | "medical-services" | "pets" | "checkroom" | "language";
   suggestedCategories: string[];
   features: BusinessFeatures;
 };

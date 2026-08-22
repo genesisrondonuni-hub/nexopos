@@ -17,6 +17,13 @@ const profileInstructions: Record<BusinessProfileId, string> = {
   GROCERY: "Aclara unidad o peso, disponibilidad y sustituciones prudentes para productos de abasto.",
   WAREHOUSE: "Orienta sobre surtido, cantidades y precios; no inventes condiciones mayoristas.",
   LIQUOR_STORE: "Ofrece bebidas disponibles y exige confirmación de mayoría de edad antes de un pedido con entrega.",
+  MEDICAL_OFFICE: "Orienta únicamente sobre servicios comerciales, precios disponibles, horarios y solicitudes de cita. No solicites ni evalúes síntomas, diagnósticos, tratamientos, urgencias o historias clínicas; escala esos asuntos al personal habilitado.",
+  CLINICAL_LAB: "Informa únicamente servicios comerciales, horarios y solicitudes. No solicites, interpretes ni comuniques resultados clínicos, diagnósticos, tratamientos o preparación médica no provista por el negocio; escala al personal habilitado.",
+  DENTAL_CLINIC: "Orienta únicamente sobre servicios, presupuestos comerciales y agenda. No emitas valoraciones odontológicas, diagnósticos, tratamientos ni recomendaciones clínicas; escala esas preguntas al profesional habilitado.",
+  VETERINARY_LAB: "Orienta únicamente sobre servicios comerciales, logística y disponibilidad. No evalúes animales, síntomas, muestras, resultados ni tratamientos; escala las consultas clínicas a personal veterinario habilitado.",
+  VETERINARY_OFFICE: "Orienta sobre agenda, servicios comerciales y productos disponibles. No diagnostiques ni recomiendes tratamientos para mascotas; escala consultas clínicas o urgentes a personal veterinario habilitado.",
+  SHOE_STORE: "Pregunta por talla, estilo, color y disponibilidad. Recomienda solo referencias existentes y no prometas cambios, reservas o descuentos no confirmados.",
+  ONLINE_STORE: "Orienta sobre catálogo, disponibilidad, pedido web, entrega y recogida. No inventes métodos de pago, descuentos, coberturas o tiempos de despacho.",
 };
 
 export function buildSalesAgentPrompt(context: SalesAgentContext) {
@@ -31,7 +38,8 @@ export function createSalesAgentFallback(context: SalesAgentContext, now = new D
   const asksDelivery = /domicilio|entrega|delivery|enviar/.test(context.customerMessage.toLocaleLowerCase());
   const needsAgeCheck = context.features.ageCheck && asksDelivery;
   if (product) return { reply: `Tengo disponible ${product.name} por $${product.price.toLocaleString("es-CO")}. Puedo preparar una propuesta para tu confirmación${asksDelivery ? " y coordinar el domicilio" : ""}.`, intent: asksDelivery ? "DELIVERY" : "ORDER_PROPOSAL", delivery: asksDelivery ? "DELIVERY" : "UNDECIDED", proposals: [{ productId: product.id, quantity: 1 }], needsCustomerData: asksDelivery, requiresConfirmation: true, mustVerifyAge: needsAgeCheck };
-  return { reply: `Con gusto te ayudo con ${context.businessName}. Indícame el producto, cantidad y si prefieres recoger o domicilio para preparar una propuesta verificable.`, intent: "CATALOG_QUERY", delivery: "UNDECIDED", proposals: [], needsCustomerData: false, requiresConfirmation: true, mustVerifyAge: false };
+  const serviceFlow = context.features.appointments ? " Indícame el servicio, fecha y horario que te interesa para preparar una solicitud." : " Indícame el producto, cantidad y si prefieres recoger o domicilio para preparar una propuesta verificable.";
+  return { reply: `Con gusto te ayudo con ${context.businessName}.${serviceFlow}`, intent: "CATALOG_QUERY", delivery: "UNDECIDED", proposals: [], needsCustomerData: false, requiresConfirmation: true, mustVerifyAge: false };
 }
 
 export function validateSalesAgentReply(reply: SalesAgentReply, context: Pick<SalesAgentContext, "products" | "features" | "agentPolicy">, now = new Date()): SalesAgentReply {

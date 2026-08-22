@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { buildSalesAgentPrompt, createSalesAgentFallback, validateSalesAgentReply } from "../shared/sales-agent";
 
-const features = { recipes: true, tables: true, barcode: false, wholesalePricing: false, delivery: true, catalog: true, ageCheck: false, weightedProducts: false };
+const features = { recipes: true, tables: true, barcode: false, wholesalePricing: false, delivery: true, catalog: true, ageCheck: false, weightedProducts: false, appointments: false, serviceOrders: false, variants: false, onlineSales: false };
 const agentPolicy = { enabled: true, timezone: "America/Bogota", opensAt: "08:00", closesAt: "20:00", servesSaturday: true, servesSunday: false, outsideHoursMessage: "Estamos fuera de horario.", humanHandoffEnabled: true, humanHandoffMessage: "Te conectaremos con un asesor.", allowPendingCancellation: true, cancellationWindowMinutes: 10 };
 const context = { businessName: "Nexo Café", profileId: "RESTAURANT" as const, features, agentPolicy, products: [{ id: "p-1", name: "Hamburguesa Nexo", category: "Platos", description: "Hamburguesa de la casa", price: 26900, stock: 4, code: "SKU-HAMB-001" }], customerMessage: "Quiero una hamburguesa a domicilio" };
 
@@ -33,5 +33,12 @@ describe("agente de ventas", () => {
     const response = createSalesAgentFallback(context, new Date("2026-08-24T02:00:00.000Z"));
     expect(response.intent).toBe("HANDOFF");
     expect(response.reply).toBe("Estamos fuera de horario.");
+  });
+
+  it("incluye límites no clínicos para los perfiles de salud", () => {
+    const healthContext = { businessName: context.businessName, profileId: "MEDICAL_OFFICE" as const, features: { ...features, appointments: true, serviceOrders: true }, agentPolicy, products: context.products, customerMessage: "Quiero una cita" };
+    const prompt = buildSalesAgentPrompt(healthContext);
+    expect(prompt).toContain("No solicites ni evalúes síntomas");
+    expect(prompt).toContain("servicios comerciales");
   });
 });
