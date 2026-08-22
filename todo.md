@@ -133,3 +133,6 @@
 - [x] Registrar y mostrar historial de tiempos de preparación por producto.
 - [x] Validar y sincronizar las mejoras avanzadas de cocina con GitHub.
 - [x] Reiniciar y comprobar el servidor de desarrollo tras la nueva interrupción reportada.
+- [x] Auditar todos los botones, enlaces y rutas disponibles en NexoPOS.
+- [x] Corregir controles sin acción, rutas incompletas o flujos interrumpidos.
+- [x] Validar y sincronizar la corrección integral de interacción con GitHub.
