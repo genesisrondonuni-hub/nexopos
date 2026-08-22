@@ -162,7 +162,7 @@
 - [x] Habilitar bolívares y dólares configurables para la operación venezolana.
 - [x] Corregir la concurrencia del respaldo versionado y añadir pruebas de conflicto.
 - [x] Auditar archivos ignorados y registros para evitar exposición en el repositorio público.
-- [ ] Validar y sincronizar las correcciones de moneda y respaldo en GitHub.
+- [x] Validar y sincronizar las correcciones de moneda y respaldo en GitHub.
 - [x] Implementar una tasa USD/VES manual, fechada y editable por el administrador.
 - [x] Sustituir el alias monetario heredado en interfaces, etiquetas y respuestas del agente.
 - [x] Garantizar actualizaciones atómicas del respaldo versionado ante concurrencia.
