@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { BUSINESS_PROFILES } from "../lib/business-store";
 import { getProfileDemoData, getProfileDemoOpportunities } from "../shared/business-profile-demo";
+import { getProfileCatalogImage } from "../shared/business-profile-content";
 
 describe("business profile demo data", () => {
   it("proporciona productos y pedidos coherentes para cada perfil", () => {
@@ -9,6 +10,7 @@ describe("business profile demo data", () => {
       const demo = getProfileDemoData(profile.id, 1_800_000_000_000);
       expect(demo.products.length).toBeGreaterThanOrEqual(3);
       expect(demo.orders.length).toBe(2);
+      expect(demo.products.every((product) => product.imageUri === getProfileCatalogImage(profile.id))).toBe(true);
       expect(demo.orders.every((order) => order.items.every((item) => item.productId?.startsWith(`demo-${profile.id.toLowerCase()}`)))).toBe(true);
     });
   });
@@ -18,8 +20,9 @@ describe("business profile demo data", () => {
     const opportunities = getProfileDemoOpportunities("CLINICAL_LAB");
     expect(lab.products.map((product) => product.name)).toContain("Hemograma completo");
     expect(lab.products.every((product) => product.type === "SERVICE")).toBe(true);
-    expect(opportunities[0]?.subject).toContain("toma de muestra");
-    expect(opportunities[0]?.appointmentAt).toBeTruthy();
+    expect(opportunities[0]?.subject).toContain("Toma de muestra");
+    expect(opportunities[0]?.appointmentAt).toMatch(/^Hoy/);
+    expect(opportunities).toHaveLength(2);
   });
 
   it("incluye referencias de zapatería con tallas y colores", () => {

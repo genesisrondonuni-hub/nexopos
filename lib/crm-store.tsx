@@ -38,7 +38,7 @@ type CrmContextValue = {
   updateAgentPolicy: (changes: Partial<AgentServicePolicy>) => void;
   updateBranchSchedule: (branchId: string, changes: Partial<BranchSchedule>) => void;
   addBranchSchedule: () => void;
-  replaceProfileDemo: (profileId: BusinessProfileId) => number;
+  replaceProfileDemo: (profileId: BusinessProfileId, edited?: SalesOpportunity[]) => number;
   createAgentOpportunity: (input: { customerName: string; phone: string; value: number; delivery: boolean; address?: string }) => void;
 };
 
@@ -123,8 +123,8 @@ export function CrmProvider({ children }: { children: ReactNode }) {
     setSettings((current) => ({ ...current, branches: [...current.branches, { id: `branch-${Date.now()}`, name: `Sede ${current.branches.length + 1}`, opensAt: current.agentPolicy.opensAt, closesAt: current.agentPolicy.closesAt, servesSaturday: current.agentPolicy.servesSaturday, servesSunday: current.agentPolicy.servesSunday }] }));
   }, []);
 
-  const replaceProfileDemo = useCallback((profileId: BusinessProfileId) => {
-    const examples = getProfileDemoOpportunities(profileId);
+  const replaceProfileDemo = useCallback((profileId: BusinessProfileId, edited?: SalesOpportunity[]) => {
+    const examples = edited ?? getProfileDemoOpportunities(profileId);
     setOpportunities((current) => [...current.filter((opportunity) => !isDemoOpportunityId(opportunity.id)), ...examples]);
     return examples.length;
   }, []);

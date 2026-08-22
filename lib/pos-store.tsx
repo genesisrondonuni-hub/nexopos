@@ -70,7 +70,7 @@ type NexoContextValue = {
   importHistory: InventoryImportRecord[];
   productMovements: ProductMovement[];
   revertImport: (importId: string) => { reverted: boolean; reason?: string };
-  replaceProfileDemo: (profileId: BusinessProfileId) => { products: number; orders: number };
+  replaceProfileDemo: (profileId: BusinessProfileId, edited?: { products: Product[]; orders: Order[] }) => { products: number; orders: number };
   hydrated: boolean;
 };
 
@@ -333,8 +333,8 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     return { reverted: true };
   }, [importHistory, products]);
 
-  const replaceProfileDemo = useCallback((profileId: BusinessProfileId) => {
-    const demo = getProfileDemoData(profileId);
+  const replaceProfileDemo = useCallback((profileId: BusinessProfileId, edited?: { products: Product[]; orders: Order[] }) => {
+    const demo = edited ?? getProfileDemoData(profileId);
     setProducts((current) => [...current.filter((product) => !isDemoProductId(product.id)), ...demo.products]);
     setOrders((current) => [...current.filter((order) => !isDemoOrderId(order.id)), ...demo.orders]);
     setProductMovements((current) => current.filter((movement) => !isDemoProductId(movement.productId)));

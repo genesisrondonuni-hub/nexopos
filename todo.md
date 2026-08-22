@@ -119,3 +119,7 @@
 - [ ] Validar y sincronizar las nuevas recomendaciones comerciales con GitHub.
 - [x] Contextualizar los productos, servicios, pedidos y citas de ejemplo para cada tipo de comercio.
 - [x] Validar los datos de ejemplo por perfil y sincronizarlos con GitHub.
+- [x] Permitir editar productos, pedidos y citas de ejemplo antes de cargarlos.
+- [x] Añadir imágenes temáticas a los catálogos iniciales por perfil.
+- [x] Crear una agenda visual diaria para servicios y solicitudes comerciales con cita.
+- [ ] Validar las mejoras de ejemplos y sincronizarlas con GitHub.

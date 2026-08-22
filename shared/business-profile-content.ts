@@ -36,6 +36,24 @@ const STARTER_CATALOGS: Record<BusinessProfileId, BusinessStarterItem[]> = {
   ONLINE_STORE: [{ name: "Audífonos inalámbricos", description: "Referencia destacada para venta en línea.", category: "Destacados", type: "FINAL", price: 89900, cost: 51000, stock: 18, collection: "Tecnología" }, { name: "Termo térmico 500 ml", description: "Novedad de catálogo para despacho nacional.", category: "Novedades", type: "FINAL", price: 59900, cost: 29000, stock: 25, collection: "Hogar" }, { name: "Cable USB-C reforzado", description: "Accesorio complementario para pedidos web.", category: "Accesorios", type: "FINAL", price: 24900, cost: 10500, stock: 40, collection: "Tecnología" }],
 };
 
+const PROFILE_CATALOG_IMAGES: Record<BusinessProfileId, string> = {
+  RESTAURANT: "/manus-storage/nexopos-restaurant-catalog_158e4ab9.jpg",
+  FAST_FOOD: "/manus-storage/nexopos-fast-food-catalog_0051b36c.jpg",
+  SUPERMARKET: "/manus-storage/nexopos-supermarket-catalog_6e912a35.jpg",
+  GROCERY: "/manus-storage/nexopos-grocery-catalog_bc82cbc7.jpg",
+  WAREHOUSE: "/manus-storage/nexopos-warehouse-catalog_4eff5dc7.jpg",
+  LIQUOR_STORE: "/manus-storage/nexopos-liquor-store-catalog_8a7877ec.jpg",
+  MEDICAL_OFFICE: "/manus-storage/nexopos-medical-office-catalog_d3cc140e.jpg",
+  CLINICAL_LAB: "/manus-storage/nexopos-clinical-lab-catalog_66e254f4.jpg",
+  DENTAL_CLINIC: "/manus-storage/nexopos-dental-catalog_708ca77d.jpg",
+  VETERINARY_LAB: "/manus-storage/nexopos-veterinary-catalog_59cc5248.jpg",
+  VETERINARY_OFFICE: "/manus-storage/nexopos-veterinary-catalog_59cc5248.jpg",
+  SHOE_STORE: "/manus-storage/nexopos-shoe-store-catalog_9dee0f23.jpg",
+  CLOTHING_STORE: "/manus-storage/nexopos-clothing-catalog_bc40316f.jpg",
+  ONLINE_STORE: "/manus-storage/nexopos-online-store-catalog_af615002.jpg",
+};
+
 export function getProfileCopy(profileId: BusinessProfileId): BusinessCopy { return PROFILE_COPY[profileId] ?? DEFAULT_COPY; }
 export function getProfileStarterCatalog(profileId: BusinessProfileId): BusinessStarterItem[] { return STARTER_CATALOGS[profileId] ?? []; }
+export function getProfileCatalogImage(profileId: BusinessProfileId) { return PROFILE_CATALOG_IMAGES[profileId]; }
 export function getProfileMetaTemplates(profileId: BusinessProfileId) { const prefix = profileId.toLocaleLowerCase(); return { newLead: `${prefix}_bienvenida`, deliveryUpdate: `${prefix}_estado_pedido`, outsideHours: `${prefix}_fuera_horario`, handoff: `${prefix}_asesor_humano`, appointmentConfirmation: `${prefix}_confirmacion_servicio`, catalogWelcome: `${prefix}_catalogo` }; }

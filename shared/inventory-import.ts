@@ -15,6 +15,8 @@ export type ImportedInventoryProduct = {
   collection?: string;
   colors?: string[];
   sizes?: string[];
+  imageUri?: string;
+  galleryImageUris?: string[];
 };
 
 export type ImportIssue = { row: number; message: string; severity: "warning" | "error" };
