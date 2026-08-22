@@ -136,3 +136,4 @@
 - [x] Auditar todos los botones, enlaces y rutas disponibles en NexoPOS.
 - [x] Corregir controles sin acción, rutas incompletas o flujos interrumpidos.
 - [x] Validar y sincronizar la corrección integral de interacción con GitHub.
+- [x] Reiniciar y comprobar el servidor tras la interrupción reportada.
