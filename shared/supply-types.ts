@@ -27,6 +27,7 @@ export type PurchaseOrder = {
   lines: PurchaseOrderLine[];
   createdAt: string;
   dispatchedAt?: string;
+  sentAt?: string;
   receivedAt?: string;
   notes?: string;
 };

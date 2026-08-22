@@ -146,3 +146,6 @@
 - [x] Validar y sincronizar el módulo de abastecimiento con GitHub.
 - [x] Reiniciar y comprobar el servidor de desarrollo tras la interrupción reportada.
 - [x] Verificar en pruebas dirigidas los filtros Pendientes y Confirmación de pedidos.
+- [x] Corregir la creación de pedidos desde la lista de reposición.
+- [x] Generar y enviar el pedido de proveedor por WhatsApp con seguimiento comercial.
+- [x] Validar y sincronizar el flujo de compra y envío a proveedor con GitHub.
