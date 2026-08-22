@@ -26,6 +26,9 @@ export type FiscalDocumentMode = "OPERATIVO" | "DIGITAL_PENDIENTE";
 export type VenezuelanFiscalSettings = {
   countryCode: "VE";
   currencyCode: "VES";
+  displayCurrency: "VES" | "USD";
+  usdVesRate: number;
+  usdVesRateUpdatedAt: string | null;
   rif: string;
   ivaRate: number;
   documentMode: FiscalDocumentMode;

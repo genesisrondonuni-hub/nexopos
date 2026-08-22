@@ -157,3 +157,13 @@
 - [x] Implementar la base protegida de respaldo y sincronización multi-dispositivo.
 - [x] Retirar o proteger endpoints públicos no utilizados antes de activar la sincronización.
 - [x] Validar y sincronizar los cambios venezolanos en el repositorio público durante desarrollo.
+- [x] Reiniciar y comprobar el servidor de desarrollo tras la interrupción reportada.
+- [x] Verificar los formatos monetarios residuales y las configuraciones locales de moneda.
+- [x] Habilitar bolívares y dólares configurables para la operación venezolana.
+- [x] Corregir la concurrencia del respaldo versionado y añadir pruebas de conflicto.
+- [x] Auditar archivos ignorados y registros para evitar exposición en el repositorio público.
+- [ ] Validar y sincronizar las correcciones de moneda y respaldo en GitHub.
+- [x] Implementar una tasa USD/VES manual, fechada y editable por el administrador.
+- [x] Sustituir el alias monetario heredado en interfaces, etiquetas y respuestas del agente.
+- [x] Garantizar actualizaciones atómicas del respaldo versionado ante concurrencia.
+- [x] Eliminar trazas de sesión y excluir archivos .env del repositorio público.

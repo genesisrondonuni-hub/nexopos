@@ -118,11 +118,6 @@ export default function OAuthCallback() {
             code = urlObj.searchParams.get("code");
             state = urlObj.searchParams.get("state");
             sessionToken = urlObj.searchParams.get("sessionToken");
-            console.log("[OAuth] Extracted from URL:", {
-              code: code?.substring(0, 20) + "...",
-              state: state?.substring(0, 20) + "...",
-              sessionToken: sessionToken ? "present" : "missing",
-            });
           } catch (e) {
             console.log("[OAuth] Failed to parse as full URL, trying regex:", e);
             // Try parsing as relative URL with query params
@@ -133,11 +128,6 @@ export default function OAuthCallback() {
                 if (key === "code") code = decodeURIComponent(value);
                 if (key === "state") state = decodeURIComponent(value);
                 if (key === "sessionToken") sessionToken = decodeURIComponent(value);
-              });
-              console.log("[OAuth] Extracted from regex:", {
-                code: code?.substring(0, 20) + "...",
-                state: state?.substring(0, 20) + "...",
-                sessionToken: sessionToken ? "present" : "missing",
               });
             }
           }
@@ -176,10 +166,6 @@ export default function OAuthCallback() {
         }
 
         // Exchange code for session token
-        console.log("[OAuth] Exchanging code for session token...", {
-          code: code.substring(0, 20) + "...",
-          state: state.substring(0, 20) + "...",
-        });
         const result = await Api.exchangeOAuthCode(code, state);
         console.log("[OAuth] Exchange result:", {
           hasSessionToken: !!result.sessionToken,
@@ -194,7 +180,6 @@ export default function OAuthCallback() {
 
           // Store user info if available
           if (result.user) {
-            console.log("[OAuth] User data received:", result.user);
             const userInfo: Auth.User = {
               id: result.user.id,
               openId: result.user.openId,
@@ -204,7 +189,6 @@ export default function OAuthCallback() {
               lastSignedIn: new Date(result.user.lastSignedIn || Date.now()),
             };
             await Auth.setUserInfo(userInfo);
-            console.log("[OAuth] User info stored:", userInfo);
           } else {
             console.log("[OAuth] No user data in result");
           }
@@ -218,7 +202,7 @@ export default function OAuthCallback() {
             router.replace("/(tabs)");
           }, 1000);
         } else {
-          console.error("[OAuth] No session token in result:", result);
+          console.error("[OAuth] No session token in result");
           setStatus("error");
           setErrorMessage("No session token received");
         }

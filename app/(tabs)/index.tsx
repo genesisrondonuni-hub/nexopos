@@ -2,7 +2,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { Card, colors, formatCOP, MetricCard, PrimaryButton, SectionTitle, StatusPill } from "@/components/nexo-ui";
+import { Card, colors, formatMoney, MetricCard, PrimaryButton, SectionTitle, StatusPill } from "@/components/nexo-ui";
 import { ScreenContainer } from "@/components/screen-container";
 import { useNexo } from "@/lib/pos-store";
 import { useBusiness } from "@/lib/business-store";
@@ -14,7 +14,7 @@ function ActivityRow({ title, detail, amount, status }: { title: string; detail:
     <View style={styles.activityRow}>
       <View style={styles.activityIcon}><MaterialIcons name="receipt-long" size={18} color={colors.green} /></View>
       <View style={styles.activityCopy}><Text style={styles.activityTitle}>{title}</Text><Text style={styles.activityDetail}>{detail}</Text></View>
-      <View style={styles.activityEnd}><Text style={styles.activityAmount}>{formatCOP(amount)}</Text><StatusPill status={status} /></View>
+      <View style={styles.activityEnd}><Text style={styles.activityAmount}>{formatMoney(amount)}</Text><StatusPill status={status} /></View>
     </View>
   );
 }
@@ -38,14 +38,14 @@ export default function DashboardScreen() {
         <Pressable onPress={() => router.push("/cash-register" as never)} style={({ pressed }) => [styles.cashBanner, { backgroundColor: experience.accent }, pressed && styles.pressed]}>
           <View style={styles.cashIcon}><MaterialIcons name={profile.icon as never} size={20} color={colors.white} /></View>
           <View style={styles.cashCopy}><Text style={styles.cashTitle}>{cashSession?.status === "ABIERTA" ? "Caja abierta" : "Caja sin abrir"}</Text><Text style={styles.cashDescription}>{cashSession?.status === "ABIERTA" ? `Efectivo esperado · ${cashSession.operatorName}` : "Abre el turno para controlar efectivo y arqueo"}</Text></View>
-          <View><Text style={styles.cashAmount}>{formatCOP(cashSession?.status === "ABIERTA" ? cashSummary.expected : 0)}</Text><Text style={styles.cashLabel}>{cashSession?.status === "ABIERTA" ? "En caja" : "Sin turno"}</Text></View>
+          <View><Text style={styles.cashAmount}>{formatMoney(cashSession?.status === "ABIERTA" ? cashSummary.expected : 0)}</Text><Text style={styles.cashLabel}>{cashSession?.status === "ABIERTA" ? "En caja" : "Sin turno"}</Text></View>
         </Pressable>
 
         <View style={styles.metrics}>
-          <MetricCard label="Ventas de hoy" value={formatCOP(summary.sales, true)} icon="trending-up" helper={`${summary.orders} cobros registrados`} />
-          <MetricCard label="Utilidad" value={formatCOP(summary.profit, true)} icon="account-balance-wallet" tone="ink" helper={`Margen: ${margin}%`} />
+          <MetricCard label="Ventas de hoy" value={formatMoney(summary.sales, true)} icon="trending-up" helper={`${summary.orders} cobros registrados`} />
+          <MetricCard label="Utilidad" value={formatMoney(summary.profit, true)} icon="account-balance-wallet" tone="ink" helper={`Margen: ${margin}%`} />
           <MetricCard label="Pedidos" value={String(summary.orders)} icon="receipt-long" tone="gold" helper={`${orders.filter((order) => order.status === "PENDIENTE").length} por atender`} />
-          <MetricCard label="Gastos" value={formatCOP(summary.expenses, true)} icon="payments" tone="ink" helper={cashSession?.status === "ABIERTA" ? "Movimientos del turno" : "Sin turno abierto"} />
+          <MetricCard label="Gastos" value={formatMoney(summary.expenses, true)} icon="payments" tone="ink" helper={cashSession?.status === "ABIERTA" ? "Movimientos del turno" : "Sin turno abierto"} />
         </View>
 
         <View style={styles.actionBlock}>

@@ -1,12 +1,14 @@
 import type { BusinessFeatures, BusinessProfileId } from "./business-types";
 import type { AgentServicePolicy } from "./crm-types";
+import type { VenezuelanFiscalSettings } from "./business-types";
 import { isServiceAvailable } from "../lib/crm-utils";
+import { formatBusinessMoney } from "./currency-format";
 
 export type SalesAgentIntent = "CATALOG_QUERY" | "ORDER_PROPOSAL" | "DELIVERY" | "HANDOFF";
 export type SalesAgentDelivery = "PICKUP" | "DELIVERY" | "UNDECIDED";
 
 export type SalesAgentProduct = { id: string; name: string; category: string; description: string; price: number; stock: number; code: string };
-export type SalesAgentContext = { businessName: string; profileId: BusinessProfileId; features: BusinessFeatures; products: SalesAgentProduct[]; customerMessage: string; agentPolicy: AgentServicePolicy };
+export type SalesAgentContext = { businessName: string; profileId: BusinessProfileId; features: BusinessFeatures; fiscal: VenezuelanFiscalSettings; products: SalesAgentProduct[]; customerMessage: string; agentPolicy: AgentServicePolicy };
 export type SalesAgentProposal = { productId: string; quantity: number };
 export type SalesAgentReply = { reply: string; intent: SalesAgentIntent; delivery: SalesAgentDelivery; proposals: SalesAgentProposal[]; needsCustomerData: boolean; requiresConfirmation: true; mustVerifyAge: boolean };
 
@@ -38,7 +40,7 @@ export function createSalesAgentFallback(context: SalesAgentContext, now = new D
   const product = context.products.find((item) => item.stock > 0 && words.some((word) => `${item.name} ${item.category} ${item.description}`.toLocaleLowerCase().includes(word)));
   const asksDelivery = /domicilio|entrega|delivery|enviar/.test(context.customerMessage.toLocaleLowerCase());
   const needsAgeCheck = context.features.ageCheck && asksDelivery;
-  if (product) return { reply: `Tengo disponible ${product.name} por $${product.price.toLocaleString("es-CO")}. Puedo preparar una propuesta para tu confirmación${asksDelivery ? " y coordinar el domicilio" : ""}.`, intent: asksDelivery ? "DELIVERY" : "ORDER_PROPOSAL", delivery: asksDelivery ? "DELIVERY" : "UNDECIDED", proposals: [{ productId: product.id, quantity: 1 }], needsCustomerData: asksDelivery, requiresConfirmation: true, mustVerifyAge: needsAgeCheck };
+  if (product) return { reply: `Tengo disponible ${product.name} por ${formatBusinessMoney(product.price, context.fiscal)}. Puedo preparar una propuesta para tu confirmación${asksDelivery ? " y coordinar el domicilio" : ""}.`, intent: asksDelivery ? "DELIVERY" : "ORDER_PROPOSAL", delivery: asksDelivery ? "DELIVERY" : "UNDECIDED", proposals: [{ productId: product.id, quantity: 1 }], needsCustomerData: asksDelivery, requiresConfirmation: true, mustVerifyAge: needsAgeCheck };
   const serviceFlow = context.features.appointments ? " Indícame el servicio, fecha y horario que te interesa para preparar una solicitud." : " Indícame el producto, cantidad y si prefieres recoger o domicilio para preparar una propuesta verificable.";
   return { reply: `Con gusto te ayudo con ${context.businessName}.${serviceFlow}`, intent: "CATALOG_QUERY", delivery: "UNDECIDED", proposals: [], needsCustomerData: false, requiresConfirmation: true, mustVerifyAge: false };
 }

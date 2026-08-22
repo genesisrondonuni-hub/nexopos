@@ -5,6 +5,8 @@ import type { BusinessConfiguration, BusinessCopy, BusinessFeatures, BusinessPro
 import { getProfileCopy } from "../shared/business-profile-content";
 import { canRemoveCategory, hasCategoryName, normalizeCategoryName } from "../shared/category-utils";
 import { DEFAULT_VENEZUELAN_FISCAL_SETTINGS, normalizeIvaRate, normalizeVenezuelanRif } from "../shared/venezuela-fiscal";
+import { setMoneyPreferences } from "../shared/currency-format";
+import { normalizeUsdVesRate } from "../shared/venezuela-fiscal";
 
 const STORAGE_KEY = "@nexopos:business-profile:v1";
 
@@ -66,7 +68,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
         if (savedProfile && parsed.businessName) {
           const categories = Array.isArray(parsed.categories) && parsed.categories.length ? parsed.categories : parsed.suggestedCategories;
           const normalizedCategories = categories.map(normalizeCategoryName).filter((category): category is string => Boolean(category));
-          setConfiguration({ ...parsed, suggestedCategories: savedProfile.suggestedCategories, categories: [...new Set(normalizedCategories)], features: { ...savedProfile.features, ...parsed.features }, copy: { ...getProfileCopy(savedProfile.id), ...parsed.copy }, fiscal: { ...DEFAULT_VENEZUELAN_FISCAL_SETTINGS, ...parsed.fiscal, countryCode: "VE", currencyCode: "VES", rif: normalizeVenezuelanRif(parsed.fiscal?.rif ?? ""), ivaRate: normalizeIvaRate(parsed.fiscal?.ivaRate ?? DEFAULT_VENEZUELAN_FISCAL_SETTINGS.ivaRate) } });
+          setConfiguration({ ...parsed, suggestedCategories: savedProfile.suggestedCategories, categories: [...new Set(normalizedCategories)], features: { ...savedProfile.features, ...parsed.features }, copy: { ...getProfileCopy(savedProfile.id), ...parsed.copy }, fiscal: { ...DEFAULT_VENEZUELAN_FISCAL_SETTINGS, ...parsed.fiscal, countryCode: "VE", currencyCode: "VES", displayCurrency: parsed.fiscal?.displayCurrency === "USD" ? "USD" : "VES", usdVesRate: normalizeUsdVesRate(parsed.fiscal?.usdVesRate ?? 0), usdVesRateUpdatedAt: typeof parsed.fiscal?.usdVesRateUpdatedAt === "string" ? parsed.fiscal.usdVesRateUpdatedAt : null, rif: normalizeVenezuelanRif(parsed.fiscal?.rif ?? ""), ivaRate: normalizeIvaRate(parsed.fiscal?.ivaRate ?? DEFAULT_VENEZUELAN_FISCAL_SETTINGS.ivaRate) } });
         }
       } catch {
         // The default restaurant profile remains available when local preferences cannot be restored.
@@ -81,6 +83,8 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     if (!hydrated) return;
     void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(configuration));
   }, [configuration, hydrated]);
+
+  useEffect(() => { setMoneyPreferences(configuration.fiscal); }, [configuration.fiscal]);
 
   const selectProfile = useCallback((profileId: BusinessProfileId) => {
     const profile = BUSINESS_PROFILES.find((entry) => entry.id === profileId);
@@ -102,7 +106,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateFiscal = useCallback((changes: Partial<BusinessConfiguration["fiscal"]>) => {
-    setConfiguration((current) => ({ ...current, fiscal: { ...current.fiscal, ...changes, countryCode: "VE", currencyCode: "VES", rif: changes.rif === undefined ? current.fiscal.rif : normalizeVenezuelanRif(changes.rif), ivaRate: changes.ivaRate === undefined ? current.fiscal.ivaRate : normalizeIvaRate(changes.ivaRate) } }));
+    setConfiguration((current) => ({ ...current, fiscal: { ...current.fiscal, ...changes, countryCode: "VE", currencyCode: "VES", displayCurrency: changes.displayCurrency === "USD" ? "USD" : changes.displayCurrency === "VES" ? "VES" : current.fiscal.displayCurrency, usdVesRate: changes.usdVesRate === undefined ? current.fiscal.usdVesRate : normalizeUsdVesRate(changes.usdVesRate), usdVesRateUpdatedAt: changes.usdVesRate === undefined ? current.fiscal.usdVesRateUpdatedAt : new Date().toISOString(), rif: changes.rif === undefined ? current.fiscal.rif : normalizeVenezuelanRif(changes.rif), ivaRate: changes.ivaRate === undefined ? current.fiscal.ivaRate : normalizeIvaRate(changes.ivaRate) } }));
   }, []);
 
   const addCategory = useCallback((name: string) => {

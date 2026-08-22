@@ -1,6 +1,8 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { formatBusinessMoney, formatConfiguredMoney } from "@/shared/currency-format";
+import { DEFAULT_VENEZUELAN_FISCAL_SETTINGS } from "@/shared/venezuela-fiscal";
 
 export const colors = {
   ink: "#17211F",
@@ -14,13 +16,9 @@ export const colors = {
   white: "#FFFFFF",
 };
 
-export function formatVES(value: number, compact = false) {
-  if (compact && Math.abs(value) >= 1000000) return `Bs. ${(value / 1000000).toFixed(1).replace(".0", "")} M`;
-  return new Intl.NumberFormat("es-VE", { style: "currency", currency: "VES", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
-}
+export function formatMoney(value: number, compact = false) { return formatConfiguredMoney(value, compact); }
 
-/** @deprecated Usa formatVES. Se conserva como alias durante la migración interna. */
-export const formatCOP = formatVES;
+export function formatVES(value: number, compact = false) { return formatBusinessMoney(value, { ...DEFAULT_VENEZUELAN_FISCAL_SETTINGS, displayCurrency: "VES" }, compact); }
 
 export function MetricCard({ label, value, icon, tone = "green", helper }: { label: string; value: string; icon: keyof typeof MaterialIcons.glyphMap; tone?: "green" | "gold" | "ink"; helper?: string }) {
   const background = tone === "green" ? colors.mint : tone === "gold" ? "#FFF2D4" : "#E8ECEA";

@@ -7,6 +7,7 @@ describe("superficie de sincronización", () => {
     const source = readFileSync(resolve(process.cwd(), "server/routers.ts"), "utf8");
     expect(source).toContain("sync: router");
     expect(source).toContain("protectedProcedure.input(snapshotInput)");
+    expect(source).toContain("CONFLICT");
     expect(source).not.toContain("pos: router");
     expect(source).not.toContain("orders: router");
   });

@@ -3,7 +3,7 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { Card, colors, formatCOP, MetricCard } from "@/components/nexo-ui";
+import { Card, colors, formatMoney, MetricCard } from "@/components/nexo-ui";
 import { ScreenContainer } from "@/components/screen-container";
 import { useCrm } from "@/lib/crm-store";
 import { exportSalesReport } from "@/lib/sales-report-export";
@@ -15,13 +15,13 @@ type ReportRow = { kind: "section"; id: string; title: string; subtitle?: string
 const RANGE_OPTIONS: Array<{ id: SalesAnalyticsRange; label: string }> = [{ id: "ALL", label: "Todo" }, { id: "7D", label: "7 días" }, { id: "30D", label: "30 días" }, { id: "90D", label: "90 días" }];
 
 function productRow(metric: ProductSalesMetric, type: "TOP" | "LOW" | "LOSS" | "EXIT"): Extract<ReportRow, { kind: "product" }> {
-  if (type === "TOP") return { kind: "product", id: `top-${metric.productId}`, title: metric.name, detail: `${metric.unitsSold} unidades · ${metric.collection}`, value: formatCOP(metric.revenue), tone: "green", icon: "trending-up" };
-  if (type === "LOW") return { kind: "product", id: `low-${metric.productId}`, title: metric.name, detail: `${metric.unitsSold} unidades · ${metric.stock} en inventario`, value: formatCOP(metric.revenue), tone: "gold", icon: "trending-down" };
-  if (type === "LOSS") return { kind: "product", id: `loss-${metric.productId}`, title: metric.name, detail: metric.grossProfit < 0 ? `Pérdida acumulada: ${formatCOP(Math.abs(metric.grossProfit))}` : "Precio actual inferior al costo", value: formatCOP(metric.currentPrice), tone: "coral", icon: "money-off" };
+  if (type === "TOP") return { kind: "product", id: `top-${metric.productId}`, title: metric.name, detail: `${metric.unitsSold} unidades · ${metric.collection}`, value: formatMoney(metric.revenue), tone: "green", icon: "trending-up" };
+  if (type === "LOW") return { kind: "product", id: `low-${metric.productId}`, title: metric.name, detail: `${metric.unitsSold} unidades · ${metric.stock} en inventario`, value: formatMoney(metric.revenue), tone: "gold", icon: "trending-down" };
+  if (type === "LOSS") return { kind: "product", id: `loss-${metric.productId}`, title: metric.name, detail: metric.grossProfit < 0 ? `Pérdida acumulada: ${formatMoney(Math.abs(metric.grossProfit))}` : "Precio actual inferior al costo", value: formatMoney(metric.currentPrice), tone: "coral", icon: "money-off" };
   return { kind: "product", id: `exit-${metric.productId}`, title: metric.name, detail: metric.retirementReason ?? "Requiere revisión comercial", value: `${metric.stock} ud.`, tone: "coral", icon: "remove-shopping-cart" };
 }
 
-function groupRow(metric: SalesGroupMetric, label: string, icon: keyof typeof MaterialIcons.glyphMap): Extract<ReportRow, { kind: "group" }> { return { kind: "group", id: `${label}-${metric.id}`, title: metric.name, detail: `${metric.orders} pedidos · utilidad ${formatCOP(metric.grossProfit)}`, value: formatCOP(metric.revenue), icon }; }
+function groupRow(metric: SalesGroupMetric, label: string, icon: keyof typeof MaterialIcons.glyphMap): Extract<ReportRow, { kind: "group" }> { return { kind: "group", id: `${label}-${metric.id}`, title: metric.name, detail: `${metric.orders} pedidos · utilidad ${formatMoney(metric.grossProfit)}`, value: formatMoney(metric.revenue), icon }; }
 
 export default function SalesAnalyticsScreen() {
   const { products, orders } = useNexo();

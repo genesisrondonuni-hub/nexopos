@@ -47,9 +47,21 @@ export async function saveOperationSnapshot(input: { userId: number; businessKey
   if (currentRevision !== input.expectedRevision) return { conflict: true as const, revision: currentRevision };
   const revision = currentRevision + 1;
   if (current) {
-    await db.update(operationSnapshots).set({ payload: input.payload, revision, updatedAt: new Date() }).where(eq(operationSnapshots.id, current.id));
+    const updated = await db.update(operationSnapshots).set({ payload: input.payload, revision, updatedAt: new Date() }).where(and(eq(operationSnapshots.id, current.id), eq(operationSnapshots.revision, input.expectedRevision)));
+    if (updated[0].affectedRows !== 1) {
+      const latest = await getOperationSnapshot(input.userId, input.businessKey);
+      return { conflict: true as const, revision: latest?.revision ?? 0 };
+    }
   } else {
-    await db.insert(operationSnapshots).values({ userId: input.userId, businessKey: input.businessKey, payload: input.payload, revision });
+    try {
+      await db.insert(operationSnapshots).values({ userId: input.userId, businessKey: input.businessKey, payload: input.payload, revision });
+    } catch (error) {
+      if ((error as { code?: string }).code === "ER_DUP_ENTRY") {
+        const latest = await getOperationSnapshot(input.userId, input.businessKey);
+        return { conflict: true as const, revision: latest?.revision ?? 0 };
+      }
+      throw error;
+    }
   }
   return { conflict: false as const, revision };
 }

@@ -3,6 +3,9 @@ import type { FiscalDocumentMode, VenezuelanFiscalSettings } from "./business-ty
 export const DEFAULT_VENEZUELAN_FISCAL_SETTINGS: VenezuelanFiscalSettings = {
   countryCode: "VE",
   currencyCode: "VES",
+  displayCurrency: "VES",
+  usdVesRate: 0,
+  usdVesRateUpdatedAt: null,
   rif: "",
   ivaRate: 16,
   documentMode: "OPERATIVO",
@@ -20,6 +23,10 @@ export function isValidVenezuelanRif(value: string) {
 
 export function normalizeIvaRate(value: number) {
   return Number.isFinite(value) ? Math.min(31, Math.max(0, Math.round(value * 100) / 100)) : DEFAULT_VENEZUELAN_FISCAL_SETTINGS.ivaRate;
+}
+
+export function normalizeUsdVesRate(value: number) {
+  return Number.isFinite(value) ? Math.min(100000000, Math.max(0, Math.round(value * 10000) / 10000)) : 0;
 }
 
 export function fiscalModeLabel(mode: FiscalDocumentMode) {
