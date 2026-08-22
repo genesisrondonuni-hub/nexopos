@@ -52,6 +52,8 @@ export interface PaymentSplit {
   receivedCurrency?: "VES" | "USD";
   receivedAmount?: number;
   exchangeRate?: number;
+  tenderedAmount?: number;
+  changeAmount?: number;
 }
 
 export type CashMovementType = "INGRESO" | "EGRESO";

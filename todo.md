@@ -193,3 +193,6 @@
 - [x] Mostrar fecha y referencia de la tasa junto al total dual.
 - [x] Permitir moneda recibida VES o USD en cada parte del pago mixto.
 - [x] Validar y sincronizar las mejoras de pago dual con GitHub.
+- [x] Revisar las reglas de vuelto con pagos recibidos en VES y USD.
+- [x] Implementar y mostrar el cálculo de vuelto por moneda en efectivo.
+- [ ] Validar y sincronizar el cálculo de vuelto con GitHub.
