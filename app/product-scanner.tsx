@@ -18,7 +18,7 @@ export default function ProductScannerScreen() {
     subscription.current?.remove();
     subscription.current = null;
     haptic.success();
-    router.replace({ pathname: "/(tabs)/pos", params: { scannedCode: normalized } } as never);
+    router.replace({ pathname: "/(tabs)/pos", params: { scannedCode: normalized, scanToken: String(Date.now()) } } as never);
   };
   const openScanner = async () => {
     if (Platform.OS === "web") { Alert.alert("Escáner no disponible", "En el navegador puedes escribir o pegar el código del producto."); return; }

@@ -84,3 +84,5 @@
 - [x] Definir y aplicar una política operativa de cancelación de pedidos gestionados por el agente.
 - [x] Preparar plantillas aprobables y webhooks de Meta WhatsApp para estados de mensajes y delivery.
 - [x] Validar las nuevas políticas de atención, escalamiento, cancelación y webhook antes de activar credenciales.
+- [x] Completar el lector de códigos de barras por cámara en el POS con ingreso manual de respaldo.
+- [x] Validar que el escaneo identifica el producto y lo añade correctamente al carrito.
