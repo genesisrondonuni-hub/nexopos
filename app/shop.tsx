@@ -1,6 +1,6 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router } from "expo-router";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { colors, formatCOP } from "@/components/nexo-ui";
 import { ScreenContainer } from "@/components/screen-container";
@@ -15,7 +15,7 @@ function CatalogItem({ product, accent }: { product: Product; accent: string }) 
   const soldOut = product.stock <= 0;
   return <View style={styles.product}>
     <View style={[styles.productArt, { backgroundColor: product.category === "Bebidas" ? "#DFEFFF" : product.category === "Postres" ? "#FDE9E4" : colors.mint }]}>
-      <MaterialIcons name={product.category === "Bebidas" ? "local-drink" : product.category === "Postres" ? "cake" : "restaurant"} size={29} color={product.category === "Postres" ? colors.coral : accent} />
+      {product.imageUri ? <Image source={{ uri: product.imageUri }} style={styles.productPhoto} /> : <MaterialIcons name={product.category === "Bebidas" ? "local-drink" : product.category === "Postres" ? "cake" : "restaurant"} size={29} color={product.category === "Postres" ? colors.coral : accent} />}
     </View>
     <View style={styles.productCopy}><Text style={[styles.category, { color: accent }]}>{product.category}</Text><Text style={styles.productName}>{product.name}</Text><Text style={styles.productDescription} numberOfLines={2}>{product.description}</Text><Text style={[styles.productCode, { color: accent }]}>{product.code}</Text></View>
     <View style={styles.productEnd}><Text style={styles.productPrice}>{formatCOP(product.price)}</Text><Pressable disabled={soldOut} onPress={() => { haptic.light(); addToCatalogCart(product); }} style={({ pressed }) => [styles.addButton, { backgroundColor: accent }, soldOut && styles.disabledButton, pressed && !soldOut && styles.pressed]}><MaterialIcons name={soldOut ? "remove-shopping-cart" : "add"} size={19} color={colors.white} /></Pressable></View>
@@ -53,7 +53,8 @@ const styles = StyleSheet.create({
   introTitle: { color: colors.ink, fontSize: 23, fontWeight: "800", letterSpacing: -0.5 },
   introBody: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 4 },
   product: { alignItems: "center", backgroundColor: colors.white, borderColor: colors.line, borderRadius: 18, borderWidth: 1, flexDirection: "row", gap: 11, minHeight: 106, padding: 12 },
-  productArt: { alignItems: "center", borderRadius: 14, height: 68, justifyContent: "center", width: 68 },
+  productArt: { alignItems: "center", borderRadius: 14, height: 68, justifyContent: "center", overflow: "hidden", width: 68 },
+  productPhoto: { height: "100%", width: "100%" },
   productCopy: { flex: 1 },
   category: { color: colors.green, fontSize: 10, fontWeight: "800", textTransform: "uppercase" },
   productName: { color: colors.ink, fontSize: 14, fontWeight: "800", marginTop: 3 },

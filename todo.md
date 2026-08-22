@@ -62,3 +62,8 @@
 - [x] Añadir código único, nombre y descripción a los productos y sus validaciones.
 - [x] Incorporar código de producto en inventario, POS, catálogo e importaciones.
 - [x] Validar los perfiles visuales y la gestión de códigos de producto.
+- [x] Definir los flujos de búsqueda por código, escaneo, edición e imágenes de productos.
+- [x] Implementar búsqueda por nombre o código y acceso de escaneo en el POS.
+- [x] Implementar la edición de productos existentes con validaciones de código.
+- [x] Permitir asignar y visualizar imágenes específicas en los productos.
+- [x] Validar los flujos de búsqueda, edición e imágenes de inventario.

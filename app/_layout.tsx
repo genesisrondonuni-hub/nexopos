@@ -99,6 +99,7 @@ export default function RootLayout() {
                   <Stack.Screen name="business-profile" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="product-categories" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="product-editor" options={{ presentation: "formSheet" }} />
+                  <Stack.Screen name="product-scanner" options={{ presentation: "fullScreenModal" }} />
                   <Stack.Screen name="inventory-import" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="inventory-import-history" options={{ presentation: "formSheet" }} />
                   <Stack.Screen name="gemini-settings" options={{ presentation: "formSheet" }} />

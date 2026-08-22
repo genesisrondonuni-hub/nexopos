@@ -101,7 +101,7 @@ type NexoContextValue = {
   toggleCatalog: (productId: string) => void;
   updateProductCategory: (productId: string, category: string) => void;
   createProduct: (product: Omit<Product, "id">) => { created: boolean; reason?: string };
-  updateProductDetails: (productId: string, changes: Pick<Product, "code" | "name" | "description" | "category" | "price" | "cost" | "stock" | "minStock">) => { updated: boolean; reason?: string };
+  updateProductDetails: (productId: string, changes: Pick<Product, "code" | "name" | "description" | "imageUri" | "category" | "price" | "cost" | "stock" | "minStock">) => { updated: boolean; reason?: string };
   upsertImportedProducts: (products: ImportedInventoryProduct[], source?: string) => { created: number; updated: number; importId: string };
   importHistory: InventoryImportRecord[];
   revertImport: (importId: string) => { reverted: boolean; reason?: string };
@@ -261,7 +261,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     return { created: true };
   }, [products]);
 
-  const updateProductDetails = useCallback((productId: string, changes: Pick<Product, "code" | "name" | "description" | "category" | "price" | "cost" | "stock" | "minStock">) => {
+  const updateProductDetails = useCallback((productId: string, changes: Pick<Product, "code" | "name" | "description" | "imageUri" | "category" | "price" | "cost" | "stock" | "minStock">) => {
     const code = normalizeProductCode(changes.code);
     if (!isValidProductCode(code) || !changes.name.trim() || !changes.description.trim()) return { updated: false, reason: "Revisa el código, nombre y descripción del producto." };
     if (products.some((entry) => entry.id !== productId && entry.code === code)) return { updated: false, reason: "Ya existe otro producto con este código." };

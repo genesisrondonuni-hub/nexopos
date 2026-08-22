@@ -100,6 +100,19 @@ const config: ExpoConfig = {
       },
     ],
     [
+      "expo-camera",
+      {
+        cameraPermission: "Permite que $(PRODUCT_NAME) use la cámara para escanear códigos de producto.",
+      },
+    ],
+    [
+      "expo-image-picker",
+      {
+        photosPermission: "Permite que $(PRODUCT_NAME) acceda a tus fotos para asignar imágenes a los productos.",
+        cameraPermission: "Permite que $(PRODUCT_NAME) tome fotos de productos.",
+      },
+    ],
+    [
       "expo-splash-screen",
       {
         image: "./assets/images/splash-icon.png",
