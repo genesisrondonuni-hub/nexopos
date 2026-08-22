@@ -172,3 +172,12 @@
 - [x] Implementar conciliación de cambios y resolución guiada de conflictos multi-caja.
 - [x] Añadir la preparación administrativa para proveedores fiscales autorizados sin emisión activa.
 - [x] Validar y sincronizar las mejoras de tasa, conciliación y fiscalidad con GitHub.
+- [x] Reiniciar y comprobar el servidor de desarrollo tras la interrupción reportada.
+- [x] Reiniciar y comprobar el servidor de desarrollo tras la nueva interrupción reportada.
+- [x] Reiniciar y comprobar el servidor de desarrollo tras la interrupción más reciente.
+- [x] Reiniciar y comprobar el servidor de desarrollo tras la interrupción actual.
+- [x] Auditar el lector de código existente y las rutas de captura por cámara y teclado.
+- [x] Completar el escaneo con cámara en dispositivos móviles y gestionar permisos.
+- [x] Añadir soporte para lectores físicos que actúan como teclado.
+- [x] Mejorar la retroalimentación, validación y guía de prueba del lector.
+- [ ] Validar y sincronizar la ampliación del lector con GitHub.
