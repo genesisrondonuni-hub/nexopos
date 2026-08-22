@@ -21,6 +21,16 @@ export type BusinessCopy = {
   agentWelcome: string;
 };
 
+export type FiscalDocumentMode = "OPERATIVO" | "DIGITAL_PENDIENTE";
+
+export type VenezuelanFiscalSettings = {
+  countryCode: "VE";
+  currencyCode: "VES";
+  rif: string;
+  ivaRate: number;
+  documentMode: FiscalDocumentMode;
+};
+
 export type BusinessStarterItem = {
   name: string;
   description: string;
@@ -51,4 +61,5 @@ export type BusinessConfiguration = {
   categories: string[];
   features: BusinessFeatures;
   copy: BusinessCopy;
+  fiscal: VenezuelanFiscalSettings;
 };

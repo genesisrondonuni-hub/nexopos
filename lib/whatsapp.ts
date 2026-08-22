@@ -1,6 +1,6 @@
 import type { Order } from "@/shared/pos-types";
 
-export const DEFAULT_SHOP_WHATSAPP_NUMBER = "573005550183";
+export const DEFAULT_SHOP_WHATSAPP_NUMBER = "584121234567";
 
 export function normalizeWhatsAppNumber(value: string) {
   return value.replace(/\D/g, "");
@@ -11,7 +11,7 @@ export function isValidWhatsAppNumber(value: string) {
 }
 
 function money(value: number) {
-  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat("es-VE", { style: "currency", currency: "VES", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 }
 
 export function buildWhatsAppMessage(order: Order) {

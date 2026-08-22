@@ -149,3 +149,11 @@
 - [x] Corregir la creación de pedidos desde la lista de reposición.
 - [x] Generar y enviar el pedido de proveedor por WhatsApp con seguimiento comercial.
 - [x] Validar y sincronizar el flujo de compra y envío a proveedor con GitHub.
+- [x] Revisar el análisis arquitectónico compartido y contrastarlo con NexoPOS.
+- [x] Proponer una hoja de ruta para respaldo, multi-caja, seguridad del servidor y facturación electrónica.
+- [x] Verificar requisitos comerciales y fiscales aplicables a Venezuela para la configuración de NexoPOS.
+- [x] Adaptar moneda, RIF, IVA y formatos comerciales a Venezuela.
+- [x] Preparar el módulo fiscal venezolano sin activar un proveedor externo.
+- [x] Implementar la base protegida de respaldo y sincronización multi-dispositivo.
+- [x] Retirar o proteger endpoints públicos no utilizados antes de activar la sincronización.
+- [x] Validar y sincronizar los cambios venezolanos en el repositorio público durante desarrollo.

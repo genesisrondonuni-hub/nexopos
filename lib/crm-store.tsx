@@ -14,10 +14,10 @@ const defaultSettings: CrmSettings = {
     { id: "confirmed", name: "Confirmado", color: "#197B63" },
     { id: "won", name: "Venta cerrada", color: "#744BB7" },
   ],
-  delivery: { enabled: true, baseFee: 4500, freeShippingAbove: 60000, zones: "Chapinero, Usaquén, Teusaquillo" },
+  delivery: { enabled: true, baseFee: 0, freeShippingAbove: 0, zones: "Caracas, Chacao, Baruta" },
   automations: { enabled: true, welcomeOnNewLead: true, deliveryStatusUpdate: true, followUpReminder: true },
   templates: { newLead: "crm_bienvenida", deliveryUpdate: "crm_estado_delivery", outsideHours: "crm_fuera_horario", handoff: "crm_asesor_humano", appointmentConfirmation: "crm_confirmacion_cita", catalogWelcome: "crm_catalogo_bienvenida" },
-  agentPolicy: { enabled: true, timezone: "America/Bogota", opensAt: "08:00", closesAt: "20:00", servesSaturday: true, servesSunday: false, outsideHoursMessage: "Gracias por escribirnos. Nuestro equipo responderá en el próximo horario de atención.", humanHandoffEnabled: true, humanHandoffMessage: "Te pondré en contacto con un asesor del negocio para continuar tu solicitud.", allowPendingCancellation: true, cancellationWindowMinutes: 10 },
+  agentPolicy: { enabled: true, timezone: "America/Caracas", opensAt: "08:00", closesAt: "20:00", servesSaturday: true, servesSunday: false, outsideHoursMessage: "Gracias por escribirnos. Nuestro equipo responderá en el próximo horario de atención.", humanHandoffEnabled: true, humanHandoffMessage: "Te pondré en contacto con un asesor del negocio para continuar tu solicitud.", allowPendingCancellation: true, cancellationWindowMinutes: 10 },
   branches: [{ id: "main", name: "Sede principal", opensAt: "08:00", closesAt: "20:00", servesSaturday: true, servesSunday: false }],
 };
 

@@ -1,26 +1,16 @@
 import { COOKIE_NAME } from "../shared/const.js";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import * as nexo from "./nexo-store";
+import { TRPCError } from "@trpc/server";
+import { getOperationSnapshot, saveOperationSnapshot } from "./db";
 import { buildMetaTemplatePayload, getMetaWebhookEvents, getMetaWhatsAppStatus, sendMetaTemplate } from "./meta-whatsapp";
 import { analyzeBusiness, getGeminiStatus } from "./gemini";
 import { respondWithSalesAgent } from "./sales-agent";
 import { completeGoogleSheetsAuthorization, getGoogleSheetsStatus, readGoogleSheetValues, startGoogleSheetsAuthorization } from "./google-sheets";
 
-const orderItemSchema = z.object({
-  productId: z.string().min(1).optional(),
-  name: z.string().min(1).max(120),
-  quantity: z.number().positive().max(999),
-  unitPrice: z.number().nonnegative().max(100000000),
-  isFreeSale: z.boolean(),
-});
-
-const paymentSchema = z.object({
-  method: z.enum(["CASH", "CARD", "TRANSFER", "DIGITAL_WALLET"]),
-  amount: z.number().positive().max(100000000),
-});
+const snapshotInput = z.object({ businessKey: z.string().trim().min(1).max(80).default("principal") });
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -35,35 +25,16 @@ export const appRouter = router({
       } as const;
     }),
   }),
-  pos: router({
-    openCashSession: publicProcedure.input(z.object({
-      businessId: z.string().min(1),
-      employeeId: z.string().min(1),
-      openingBalance: z.number().nonnegative().max(100000000),
-    })).mutation(({ input }) => nexo.openCashSession(input)),
-    checkout: publicProcedure.input(z.object({
-      businessId: z.string().min(1),
-      sessionId: z.string().min(1),
-      employeeId: z.string().min(1),
-      items: z.array(orderItemSchema).min(1),
-      payments: z.array(paymentSchema).min(1),
-      tip: z.number().nonnegative().max(100000000).default(0),
-    })).mutation(({ input }) => nexo.createPosSale(input)),
-  }),
-  orders: router({
-    list: publicProcedure.input(z.object({ businessId: z.string().min(1) })).query(({ input }) => nexo.listOrders(input.businessId)),
-    create: publicProcedure.input(z.object({
-      businessId: z.string().min(1),
-      customerName: z.string().min(2).max(120),
-      customerPhone: z.string().min(7).max(30),
-      deliveryMethod: z.enum(["PICKUP", "DELIVERY"]),
-      items: z.array(orderItemSchema).min(1),
-      tip: z.number().nonnegative().max(100000000).optional(),
-    })).mutation(({ input }) => nexo.createCatalogOrder(input)),
-    updateStatus: publicProcedure.input(z.object({
-      orderId: z.string().min(1),
-      status: z.enum(["PENDING", "PROCESSING", "PAID", "ARCHIVED"]),
-    })).mutation(({ input }) => nexo.updateOrderStatus(input)),
+  sync: router({
+    get: protectedProcedure.input(snapshotInput).query(async ({ ctx, input }) => {
+      const snapshot = await getOperationSnapshot(ctx.user.id, input.businessKey);
+      return snapshot ? { revision: snapshot.revision, payload: snapshot.payload, updatedAt: snapshot.updatedAt.toISOString() } : { revision: 0, payload: null, updatedAt: null };
+    }),
+    save: protectedProcedure.input(snapshotInput.extend({ expectedRevision: z.number().int().min(0), payload: z.string().min(2).max(750000) })).mutation(async ({ ctx, input }) => {
+      const result = await saveOperationSnapshot({ userId: ctx.user.id, businessKey: input.businessKey, expectedRevision: input.expectedRevision, payload: input.payload });
+      if (result.conflict) throw new TRPCError({ code: "CONFLICT", message: "El respaldo cambió desde otro dispositivo. Descarga la versión más reciente antes de subir." });
+      return result;
+    }),
   }),
   crm: router({
     metaStatus: publicProcedure.query(() => getMetaWhatsAppStatus()),

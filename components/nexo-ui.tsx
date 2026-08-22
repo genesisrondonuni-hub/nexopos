@@ -14,10 +14,13 @@ export const colors = {
   white: "#FFFFFF",
 };
 
-export function formatCOP(value: number, compact = false) {
-  if (compact && value >= 1000000) return `$${(value / 1000000).toFixed(1).replace(".0", "")} M`;
-  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value);
+export function formatVES(value: number, compact = false) {
+  if (compact && Math.abs(value) >= 1000000) return `Bs. ${(value / 1000000).toFixed(1).replace(".0", "")} M`;
+  return new Intl.NumberFormat("es-VE", { style: "currency", currency: "VES", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 }
+
+/** @deprecated Usa formatVES. Se conserva como alias durante la migración interna. */
+export const formatCOP = formatVES;
 
 export function MetricCard({ label, value, icon, tone = "green", helper }: { label: string; value: string; icon: keyof typeof MaterialIcons.glyphMap; tone?: "green" | "gold" | "ink"; helper?: string }) {
   const background = tone === "green" ? colors.mint : tone === "gold" ? "#FFF2D4" : "#E8ECEA";

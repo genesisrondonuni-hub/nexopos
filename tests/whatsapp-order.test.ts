@@ -25,7 +25,7 @@ describe("mensaje de WhatsApp del catálogo", () => {
     const message = buildWhatsAppMessage(deliveryOrder);
     expect(message).toContain("#2001");
     expect(message).toContain("1 × Bowl campesino");
-    expect(message).toContain("$ 29.000");
+    expect(message).toContain("Bs.");
     expect(message).toContain("Domicilio");
     expect(message).toContain("Calle 72 # 12-34");
     expect(message).toContain("Ana Torres");

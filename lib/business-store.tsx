@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { BusinessConfiguration, BusinessCopy, BusinessFeatures, BusinessProfileDefinition, BusinessProfileId } from "@/shared/business-types";
 import { getProfileCopy } from "../shared/business-profile-content";
 import { canRemoveCategory, hasCategoryName, normalizeCategoryName } from "../shared/category-utils";
+import { DEFAULT_VENEZUELAN_FISCAL_SETTINGS, normalizeIvaRate, normalizeVenezuelanRif } from "../shared/venezuela-fiscal";
 
 const STORAGE_KEY = "@nexopos:business-profile:v1";
 
@@ -32,6 +33,7 @@ const defaultConfiguration: BusinessConfiguration = {
   categories: defaultProfile.suggestedCategories,
   features: defaultProfile.features,
   copy: getProfileCopy(defaultProfile.id),
+  fiscal: DEFAULT_VENEZUELAN_FISCAL_SETTINGS,
 };
 
 type BusinessContextValue = {
@@ -42,6 +44,7 @@ type BusinessContextValue = {
   updateBusinessName: (businessName: string) => void;
   updateFeatures: (changes: Partial<BusinessFeatures>) => void;
   updateCopy: (changes: Partial<BusinessCopy>) => void;
+  updateFiscal: (changes: Partial<BusinessConfiguration["fiscal"]>) => void;
   addCategory: (name: string) => boolean;
   renameCategory: (currentName: string, nextName: string) => boolean;
   removeCategory: (name: string) => boolean;
@@ -63,7 +66,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
         if (savedProfile && parsed.businessName) {
           const categories = Array.isArray(parsed.categories) && parsed.categories.length ? parsed.categories : parsed.suggestedCategories;
           const normalizedCategories = categories.map(normalizeCategoryName).filter((category): category is string => Boolean(category));
-          setConfiguration({ ...parsed, suggestedCategories: savedProfile.suggestedCategories, categories: [...new Set(normalizedCategories)], features: { ...savedProfile.features, ...parsed.features }, copy: { ...getProfileCopy(savedProfile.id), ...parsed.copy } });
+          setConfiguration({ ...parsed, suggestedCategories: savedProfile.suggestedCategories, categories: [...new Set(normalizedCategories)], features: { ...savedProfile.features, ...parsed.features }, copy: { ...getProfileCopy(savedProfile.id), ...parsed.copy }, fiscal: { ...DEFAULT_VENEZUELAN_FISCAL_SETTINGS, ...parsed.fiscal, countryCode: "VE", currencyCode: "VES", rif: normalizeVenezuelanRif(parsed.fiscal?.rif ?? ""), ivaRate: normalizeIvaRate(parsed.fiscal?.ivaRate ?? DEFAULT_VENEZUELAN_FISCAL_SETTINGS.ivaRate) } });
         }
       } catch {
         // The default restaurant profile remains available when local preferences cannot be restored.
@@ -96,6 +99,10 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
 
   const updateCopy = useCallback((changes: Partial<BusinessCopy>) => {
     setConfiguration((current) => ({ ...current, copy: { ...current.copy, ...changes } }));
+  }, []);
+
+  const updateFiscal = useCallback((changes: Partial<BusinessConfiguration["fiscal"]>) => {
+    setConfiguration((current) => ({ ...current, fiscal: { ...current.fiscal, ...changes, countryCode: "VE", currencyCode: "VES", rif: changes.rif === undefined ? current.fiscal.rif : normalizeVenezuelanRif(changes.rif), ivaRate: changes.ivaRate === undefined ? current.fiscal.ivaRate : normalizeIvaRate(changes.ivaRate) } }));
   }, []);
 
   const addCategory = useCallback((name: string) => {
@@ -133,7 +140,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const profile = useMemo(() => BUSINESS_PROFILES.find((entry) => entry.id === configuration.profileId) ?? defaultProfile, [configuration.profileId]);
-  const value = useMemo(() => ({ configuration, profile, hydrated, selectProfile, updateBusinessName, updateFeatures, updateCopy, addCategory, renameCategory, removeCategory }), [configuration, profile, hydrated, selectProfile, updateBusinessName, updateFeatures, updateCopy, addCategory, renameCategory, removeCategory]);
+  const value = useMemo(() => ({ configuration, profile, hydrated, selectProfile, updateBusinessName, updateFeatures, updateCopy, updateFiscal, addCategory, renameCategory, removeCategory }), [configuration, profile, hydrated, selectProfile, updateBusinessName, updateFeatures, updateCopy, updateFiscal, addCategory, renameCategory, removeCategory]);
   return <BusinessContext.Provider value={value}>{children}</BusinessContext.Provider>;
 }
 
