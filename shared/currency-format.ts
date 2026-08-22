@@ -26,6 +26,12 @@ export function formatConfiguredMoney(value: number, compact = false) {
   return formatBusinessMoney(value, activeFiscal, compact);
 }
 
+export function formatDualCurrency(value: number, fiscal: Pick<VenezuelanFiscalSettings, "usdVesRate">) {
+  const ves = formatBusinessMoney(value, { displayCurrency: "VES", usdVesRate: fiscal.usdVesRate });
+  const usd = fiscal.usdVesRate > 0 ? formatBusinessMoney(value, { displayCurrency: "USD", usdVesRate: fiscal.usdVesRate }) : null;
+  return { ves, usd, rate: fiscal.usdVesRate };
+}
+
 export function currencyPresentationLabel(fiscal: Pick<VenezuelanFiscalSettings, "displayCurrency" | "usdVesRate">) {
   return fiscal.displayCurrency === "USD" && fiscal.usdVesRate > 0 ? "USD (referencia manual)" : "Bs. (VES)";
 }

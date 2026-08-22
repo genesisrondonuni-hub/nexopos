@@ -185,3 +185,6 @@
 - [x] Solicitar permiso de cámara explícitamente antes de iniciar el lector.
 - [x] Validar el lector de cámara y documentar su prueba en teléfono.
 - [x] Sincronizar la corrección de cámara con GitHub.
+- [x] Revisar el cálculo y formato monetario de la pantalla de cobro.
+- [x] Mostrar importes equivalentes USD/VES en el resumen de cobro.
+- [ ] Validar y sincronizar la presentación dual en el cobro con GitHub.

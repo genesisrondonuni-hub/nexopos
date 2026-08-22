@@ -3,12 +3,13 @@ import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { Card, colors, formatMoney, PrimaryButton } from "@/components/nexo-ui";
+import { Card, colors, PrimaryButton } from "@/components/nexo-ui";
 import { ScreenContainer } from "@/components/screen-container";
 import { haptic } from "@/lib/haptics";
 import { useNexo } from "@/lib/pos-store";
 import { useBusiness } from "@/lib/business-store";
 import type { CartItem, PaymentSplit } from "@/shared/pos-types";
+import { formatDualCurrency } from "@/shared/currency-format";
 
 type PaymentMode = "split" | "cash" | "card";
 type Rate = number;
@@ -20,6 +21,7 @@ function RatePicker({ label, values, value, suffix, onChange }: { label: string;
 export default function CheckoutScreen() {
   const { cart, setCartQuantity, removeFromCart, checkout } = useNexo();
   const { configuration } = useBusiness();
+  const formatMoney = (value: number) => { const dual = formatDualCurrency(value, configuration.fiscal); return dual.usd ? `${dual.ves} · ${dual.usd}` : dual.ves; };
   const subtotal = useMemo(() => cart.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0), [cart]);
   const [tipRate, setTipRate] = useState<Rate>(0);
   const [discountRate, setDiscountRate] = useState<Rate>(0);
