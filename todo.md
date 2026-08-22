@@ -184,4 +184,4 @@
 - [x] Reproducir el fallo de activación de cámara y revisar el estado de permisos.
 - [x] Solicitar permiso de cámara explícitamente antes de iniciar el lector.
 - [x] Validar el lector de cámara y documentar su prueba en teléfono.
-- [ ] Sincronizar la corrección de cámara con GitHub.
+- [x] Sincronizar la corrección de cámara con GitHub.
