@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { DEFAULT_SHOP_WHATSAPP_NUMBER, isValidWhatsAppNumber, normalizeWhatsAppNumber } from "@/lib/whatsapp";
 import type { CartItem, DailySummary, Order, OrderStatus, PaymentSplit, Product, ProductMovement } from "@/shared/pos-types";
 import { applyInventoryImport, revertInventoryImport, type ImportedInventoryProduct, type InventoryImportRecord } from "@/shared/inventory-import";
-import { createProductCode, isValidProductCode, normalizeProductCode } from "@/shared/product-code";
+import { createProductCode, getBarcodeValidation, isValidProductCode, normalizeProductCode } from "@/shared/product-code";
 
 const starterProducts: Product[] = [
   { id: "p-arepa", code: "SKU-AREPA-001", name: "Arepa de queso", description: "Arepa artesanal rellena de queso.", category: "Entradas", price: 8500, cost: 2900, stock: 32, minStock: 10, showInCatalog: true, type: "FINAL" },
@@ -113,6 +113,7 @@ type NexoContextValue = {
   createProduct: (product: Omit<Product, "id">) => { created: boolean; reason?: string };
   updateProductDetails: (productId: string, changes: Pick<Product, "code" | "name" | "description" | "imageUri" | "category" | "price" | "cost" | "stock" | "minStock">) => { updated: boolean; reason?: string };
   applyProductImages: (images: Array<{ productId: string; imageUri: string }>) => { updated: number };
+  applyImportedProductCodes: (updates: Array<{ productId: string; code: string }>) => { updated: number; reason?: string };
   upsertImportedProducts: (products: ImportedInventoryProduct[], source?: string) => { created: number; updated: number; importId: string };
   importHistory: InventoryImportRecord[];
   productMovements: ProductMovement[];
@@ -336,6 +337,19 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     return { updated: imageByProductId.size };
   }, []);
 
+  const applyImportedProductCodes = useCallback((updates: Array<{ productId: string; code: string }>) => {
+    const codesByProduct = new Map(updates.map((update) => [update.productId, normalizeProductCode(update.code)]));
+    if (!codesByProduct.size) return { updated: 0 };
+    if (codesByProduct.size !== updates.length) return { updated: 0, reason: "El archivo contiene el mismo producto más de una vez." };
+    const candidateProducts = products.map((product) => ({ ...product, code: codesByProduct.get(product.id) ?? product.code }));
+    if (candidateProducts.some((product) => !isValidProductCode(product.code))) return { updated: 0, reason: "Uno de los códigos no tiene un formato válido." };
+    if (candidateProducts.some((product) => { const barcode = getBarcodeValidation(product.code); return barcode.format !== null && !barcode.valid; })) return { updated: 0, reason: "Uno de los códigos EAN o UPC no supera el dígito de verificación." };
+    if (new Set(candidateProducts.map((product) => product.code)).size !== candidateProducts.length) return { updated: 0, reason: "Los códigos deben ser únicos." };
+    setProducts(candidateProducts);
+    setProductMovements((current) => [...updates.map((update, index) => ({ id: `mov-code-import-${Date.now()}-${index}`, productId: update.productId, type: "AJUSTE" as const, label: "Código actualizado desde Excel", createdAt: "Ahora" })), ...current].slice(0, 400));
+    return { updated: updates.length };
+  }, [products]);
+
   const upsertImportedProducts = useCallback((importedProducts: ImportedInventoryProduct[], source = "Archivo") => {
     const result = applyInventoryImport(products, importedProducts, source);
     setProducts(result.products);
@@ -355,7 +369,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     return { reverted: true };
   }, [importHistory, products]);
 
-  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, upsertImportedProducts, revertImport, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, upsertImportedProducts, revertImport, hydrated]);
+  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, hydrated]);
 
   return <NexoContext.Provider value={value}>{children}</NexoContext.Provider>;
 }

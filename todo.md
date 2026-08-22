@@ -90,3 +90,6 @@
 - [x] Ofrecer la creación de un producto nuevo cuando el código escaneado no exista.
 - [x] Añadir una guía de prueba del lector con cámara desde un dispositivo físico.
 - [x] Validar los flujos de códigos reales y creación desde escaneo.
+- [x] Permitir importar y validar códigos de producto desde archivos Excel.
+- [x] Generar etiquetas imprimibles con código de barras para productos.
+- [x] Añadir una guía de prueba con etiquetas físicas y validar los nuevos flujos.
