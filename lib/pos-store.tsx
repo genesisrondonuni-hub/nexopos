@@ -2,7 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { DEFAULT_SHOP_WHATSAPP_NUMBER, isValidWhatsAppNumber, normalizeWhatsAppNumber } from "@/lib/whatsapp";
-import type { CartItem, DailySummary, Order, OrderStatus, PaymentSplit, Product, ProductMovement } from "@/shared/pos-types";
+import type { CartItem, CashMovement, CashSession, DailySummary, Order, OrderStatus, PaymentSplit, Product, ProductMovement } from "@/shared/pos-types";
+import { getCashSessionSummary } from "@/shared/cash-utils";
 import { applyInventoryImport, revertInventoryImport, type ImportedInventoryProduct, type InventoryImportRecord } from "@/shared/inventory-import";
 import { createProductCode, getBarcodeValidation, isValidProductCode, normalizeProductCode } from "@/shared/product-code";
 import { getProfileDemoData, isDemoOrderId, isDemoProductId } from "@/shared/business-profile-demo";
@@ -17,6 +18,8 @@ const STORAGE_KEY = "@nexopos:operacion:v1";
 type CheckoutInput = {
   payments: PaymentSplit[];
   tip: number;
+  discount?: number;
+  tax?: number;
 };
 
 type PublicOrderInput = {
@@ -46,12 +49,17 @@ type NexoContextValue = {
   cart: CartItem[];
   catalogCart: CartItem[];
   businessSettings: BusinessSettings;
+  cashSession: CashSession | null;
+  cashMovements: CashMovement[];
   summary: DailySummary;
   addToCart: (product: Product) => void;
   addFreeSale: () => void;
   setCartQuantity: (itemId: string, quantity: number) => void;
   removeFromCart: (itemId: string) => void;
   checkout: (input: CheckoutInput) => Order | null;
+  openCashSession: (input: { operatorName: string; openingBase: number }) => { opened: boolean; reason?: string };
+  closeCashSession: (closingAmount: number) => { closed: boolean; difference?: number; reason?: string };
+  recordCashMovement: (input: { type: CashMovement["type"]; amount: number; concept: string }) => { recorded: boolean; reason?: string };
   addToCatalogCart: (product: Product) => void;
   setCatalogQuantity: (itemId: string, quantity: number) => void;
   createPublicOrder: (input: PublicOrderInput) => Order | null;
@@ -82,6 +90,8 @@ export function NexoProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [catalogCart, setCatalogCart] = useState<CartItem[]>([]);
   const [businessSettings, setBusinessSettings] = useState<BusinessSettings>({ whatsappNumber: DEFAULT_SHOP_WHATSAPP_NUMBER, activeBranchId: "main" });
+  const [cashSession, setCashSession] = useState<CashSession | null>(null);
+  const [cashMovements, setCashMovements] = useState<CashMovement[]>([]);
   const [summary, setSummary] = useState<DailySummary>({ sales: restaurantDemo.sales, expenses: 0, profit: restaurantDemo.profit, orders: restaurantDemo.orders.length });
   const [importHistory, setImportHistory] = useState<InventoryImportRecord[]>([]);
   const [productMovements, setProductMovements] = useState<ProductMovement[]>([]);
@@ -92,7 +102,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
       try {
         const saved = await AsyncStorage.getItem(STORAGE_KEY);
         if (!saved) return;
-        const state = JSON.parse(saved) as { products?: Product[]; orders?: Order[]; summary?: DailySummary; businessSettings?: BusinessSettings; importHistory?: InventoryImportRecord[]; productMovements?: ProductMovement[] };
+        const state = JSON.parse(saved) as { products?: Product[]; orders?: Order[]; summary?: DailySummary; businessSettings?: BusinessSettings; importHistory?: InventoryImportRecord[]; productMovements?: ProductMovement[]; cashSession?: CashSession | null; cashMovements?: CashMovement[] };
         if (state.products) setProducts(state.products.map((product, index) => ({ ...product, code: isValidProductCode(product.code ?? "") ? product.code : createProductCode(product.name, index), description: product.description?.trim() || `Producto de ${product.category}` })));
         if (state.orders) setOrders(state.orders);
         if (state.summary) setSummary(state.summary);
@@ -101,6 +111,8 @@ export function NexoProvider({ children }: { children: ReactNode }) {
         }
         if (state.importHistory) setImportHistory(state.importHistory);
         if (state.productMovements) setProductMovements(state.productMovements);
+        if (state.cashSession) setCashSession(state.cashSession);
+        if (state.cashMovements) setCashMovements(state.cashMovements);
       } catch {
         // The starter data remains available when local data cannot be restored.
       } finally {
@@ -112,8 +124,8 @@ export function NexoProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ products, orders, summary, businessSettings, importHistory, productMovements }));
-  }, [hydrated, products, orders, summary, businessSettings, importHistory, productMovements]);
+    void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ products, orders, summary, businessSettings, importHistory, productMovements, cashSession, cashMovements }));
+  }, [hydrated, products, orders, summary, businessSettings, importHistory, productMovements, cashSession, cashMovements]);
 
   const addToCart = useCallback((product: Product) => {
     if (product.stock <= 0) return;
@@ -149,7 +161,9 @@ export function NexoProvider({ children }: { children: ReactNode }) {
 
   const checkout = useCallback((input: CheckoutInput) => {
     const subtotal = cart.reduce((total, item) => total + item.quantity * item.unitPrice, 0);
-    const total = subtotal + input.tip;
+    const discount = Math.min(subtotal, Math.max(0, input.discount ?? 0));
+    const tax = Math.max(0, input.tax ?? 0);
+    const total = subtotal - discount + tax + input.tip;
     const paid = input.payments.reduce((value, payment) => value + payment.amount, 0);
     if (!cart.length || Math.abs(total - paid) > 0.01) return null;
 
@@ -162,6 +176,11 @@ export function NexoProvider({ children }: { children: ReactNode }) {
       source: "POS",
       delivery: "Mesa",
       total,
+      subtotal,
+      discount,
+      tax,
+      tip: input.tip,
+      payments: input.payments,
       createdAt: "Ahora",
       createdTimestamp: timestamp,
       branchId: businessSettings.activeBranchId,
@@ -187,6 +206,37 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     setCart([]);
     return order;
   }, [businessSettings.activeBranchId, cart, orders.length, products]);
+
+  const openCashSession = useCallback((input: { operatorName: string; openingBase: number }) => {
+    if (cashSession?.status === "ABIERTA") return { opened: false, reason: "Ya existe una caja abierta. Cierra o arquea el turno actual antes de abrir otro." };
+    const operatorName = input.operatorName.trim() || "Operador";
+    const openingBase = Math.max(0, input.openingBase);
+    const now = Date.now();
+    setCashSession({ id: `cash-${now}`, branchId: businessSettings.activeBranchId, operatorName, openingBase, openedAt: "Ahora", openedTimestamp: now, status: "ABIERTA" });
+    return { opened: true };
+  }, [businessSettings.activeBranchId, cashSession]);
+
+  const recordCashMovement = useCallback((input: { type: CashMovement["type"]; amount: number; concept: string }) => {
+    if (!cashSession || cashSession.status !== "ABIERTA") return { recorded: false, reason: "Abre una caja antes de registrar ingresos o egresos." };
+    const amount = Math.max(0, input.amount);
+    const concept = input.concept.trim();
+    if (!amount || !concept) return { recorded: false, reason: "Indica un concepto y un valor mayor a cero." };
+    const now = Date.now();
+    const movement: CashMovement = { id: `cash-mov-${now}`, sessionId: cashSession.id, type: input.type, amount, concept, createdAt: "Ahora", createdTimestamp: now };
+    setCashMovements((current) => [movement, ...current].slice(0, 200));
+    if (input.type === "EGRESO") setSummary((current) => ({ ...current, expenses: current.expenses + amount, profit: current.profit - amount }));
+    return { recorded: true };
+  }, [cashSession]);
+
+  const closeCashSession = useCallback((closingAmount: number) => {
+    if (!cashSession || cashSession.status !== "ABIERTA") return { closed: false, reason: "No hay una caja abierta para cerrar." };
+    const summary = getCashSessionSummary(cashSession, orders, cashMovements);
+    const amount = Math.max(0, closingAmount);
+    const difference = amount - summary.expected;
+    const now = Date.now();
+    setCashSession({ ...cashSession, status: "CERRADA", closingAmount: amount, difference, closedAt: "Ahora", closedTimestamp: now });
+    return { closed: true, difference };
+  }, [cashMovements, cashSession, orders]);
 
   const createPublicOrder = useCallback((input: PublicOrderInput) => {
     if (!catalogCart.length) return null;
@@ -343,7 +393,7 @@ export function NexoProvider({ children }: { children: ReactNode }) {
     return { products: demo.products.length, orders: demo.orders.length };
   }, []);
 
-  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, replaceProfileDemo, hydrated }), [products, orders, cart, catalogCart, businessSettings, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, replaceProfileDemo, hydrated]);
+  const value = useMemo(() => ({ products, orders, cart, catalogCart, businessSettings, cashSession, cashMovements, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, openCashSession, closeCashSession, recordCashMovement, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, replaceProfileDemo, hydrated }), [products, orders, cart, catalogCart, businessSettings, cashSession, cashMovements, summary, importHistory, productMovements, addToCart, addFreeSale, setCartQuantity, removeFromCart, checkout, openCashSession, closeCashSession, recordCashMovement, addToCatalogCart, setCatalogQuantity, createPublicOrder, createAgentOrder, cancelPendingOrder, updateWhatsAppNumber, updateActiveBranch, updateOrderStatus, toggleCatalog, updateProductCategory, createProduct, updateProductDetails, applyProductImages, applyImportedProductCodes, upsertImportedProducts, revertImport, replaceProfileDemo, hydrated]);
 
   return <NexoContext.Provider value={value}>{children}</NexoContext.Provider>;
 }

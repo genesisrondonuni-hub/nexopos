@@ -51,6 +51,32 @@ export interface PaymentSplit {
   amount: number;
 }
 
+export type CashMovementType = "INGRESO" | "EGRESO";
+
+export interface CashMovement {
+  id: string;
+  sessionId: string;
+  type: CashMovementType;
+  amount: number;
+  concept: string;
+  createdAt: string;
+  createdTimestamp: number;
+}
+
+export interface CashSession {
+  id: string;
+  branchId: string;
+  operatorName: string;
+  openingBase: number;
+  openedAt: string;
+  openedTimestamp: number;
+  closedAt?: string;
+  closedTimestamp?: number;
+  closingAmount?: number;
+  difference?: number;
+  status: "ABIERTA" | "CERRADA";
+}
+
 export interface Order {
   id: string;
   code: string;
@@ -64,6 +90,11 @@ export interface Order {
   branchId?: string;
   items: CartItem[];
   total: number;
+  subtotal?: number;
+  discount?: number;
+  tax?: number;
+  tip?: number;
+  payments?: PaymentSplit[];
   createdAt: string;
   createdTimestamp?: number;
   cancelledAt?: string;

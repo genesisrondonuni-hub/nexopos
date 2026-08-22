@@ -1,12 +1,13 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router } from "expo-router";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { Card, colors, formatCOP, MetricCard, PrimaryButton, SectionTitle, StatusPill } from "@/components/nexo-ui";
 import { ScreenContainer } from "@/components/screen-container";
 import { useNexo } from "@/lib/pos-store";
 import { useBusiness } from "@/lib/business-store";
 import { BUSINESS_EXPERIENCES } from "@/shared/business-experience";
+import { getCashSessionSummary } from "@/shared/cash-utils";
 
 function ActivityRow({ title, detail, amount, status }: { title: string; detail: string; amount: number; status: "PENDIENTE" | "EN PROCESO" | "PAGADO" | "ARCHIVADO" }) {
   return (
@@ -19,10 +20,12 @@ function ActivityRow({ title, detail, amount, status }: { title: string; detail:
 }
 
 export default function DashboardScreen() {
-  const { summary, orders, products } = useNexo();
+  const { summary, orders, products, cashSession, cashMovements } = useNexo();
   const { configuration, profile } = useBusiness();
   const experience = BUSINESS_EXPERIENCES[profile.id];
   const lowStock = products.filter((product) => product.stock <= product.minStock).length;
+  const cashSummary = getCashSessionSummary(cashSession ?? undefined, orders, cashMovements);
+  const margin = summary.sales ? Math.max(0, Math.round(summary.profit / summary.sales * 100)) : 0;
 
   return (
     <ScreenContainer containerClassName="bg-[#F6F3EE]" className="px-5">
@@ -32,21 +35,22 @@ export default function DashboardScreen() {
           <View style={[styles.avatar, { backgroundColor: experience.accent }]}><Text style={styles.avatarText}>{configuration.businessName.split(" ").map((word) => word[0]).join("").slice(0, 2).toUpperCase()}</Text></View>
         </View>
 
-        <View style={[styles.cashBanner, { backgroundColor: experience.accent }]}>
+        <Pressable onPress={() => router.push("/cash-register" as never)} style={({ pressed }) => [styles.cashBanner, { backgroundColor: experience.accent }, pressed && styles.pressed]}>
           <View style={styles.cashIcon}><MaterialIcons name={profile.icon as never} size={20} color={colors.white} /></View>
-          <View style={styles.cashCopy}><Text style={styles.cashTitle}>{experience.posLabel}</Text><Text style={styles.cashDescription}>{experience.headline}</Text></View>
-          <View><Text style={styles.cashAmount}>{formatCOP(150000)}</Text><Text style={styles.cashLabel}>Base inicial</Text></View>
-        </View>
+          <View style={styles.cashCopy}><Text style={styles.cashTitle}>{cashSession?.status === "ABIERTA" ? "Caja abierta" : "Caja sin abrir"}</Text><Text style={styles.cashDescription}>{cashSession?.status === "ABIERTA" ? `Efectivo esperado · ${cashSession.operatorName}` : "Abre el turno para controlar efectivo y arqueo"}</Text></View>
+          <View><Text style={styles.cashAmount}>{formatCOP(cashSession?.status === "ABIERTA" ? cashSummary.expected : 0)}</Text><Text style={styles.cashLabel}>{cashSession?.status === "ABIERTA" ? "En caja" : "Sin turno"}</Text></View>
+        </Pressable>
 
         <View style={styles.metrics}>
-          <MetricCard label="Ventas de hoy" value={formatCOP(summary.sales, true)} icon="trending-up" helper="12,4% vs. ayer" />
-          <MetricCard label="Utilidad" value={formatCOP(summary.profit, true)} icon="account-balance-wallet" tone="ink" helper="Margen: 73%" />
+          <MetricCard label="Ventas de hoy" value={formatCOP(summary.sales, true)} icon="trending-up" helper={`${summary.orders} cobros registrados`} />
+          <MetricCard label="Utilidad" value={formatCOP(summary.profit, true)} icon="account-balance-wallet" tone="ink" helper={`Margen: ${margin}%`} />
           <MetricCard label="Pedidos" value={String(summary.orders)} icon="receipt-long" tone="gold" helper={`${orders.filter((order) => order.status === "PENDIENTE").length} por atender`} />
-          <MetricCard label="Gastos" value={formatCOP(summary.expenses, true)} icon="payments" tone="ink" helper="Dentro de meta" />
+          <MetricCard label="Gastos" value={formatCOP(summary.expenses, true)} icon="payments" tone="ink" helper={cashSession?.status === "ABIERTA" ? "Movimientos del turno" : "Sin turno abierto"} />
         </View>
 
         <View style={styles.actionBlock}>
           <PrimaryButton label="Nueva venta" icon="add-shopping-cart" onPress={() => router.push("/pos")} />
+          <PrimaryButton label={cashSession?.status === "ABIERTA" ? "Caja y arqueo" : "Abrir caja"} icon="point-of-sale" onPress={() => router.push("/cash-register" as never)} />
           <PrimaryButton label="Análisis de productos" icon="insights" onPress={() => router.push("/sales-analytics" as never)} />
           <View style={styles.secondaryAction}><Text style={styles.secondaryText}>{lowStock ? `${lowStock} productos requieren atención de inventario` : "Inventario actualizado"}</Text><MaterialIcons name={lowStock ? "warning-amber" : "check-circle"} size={17} color={lowStock ? colors.gold : colors.green} /></View>
         </View>
@@ -79,6 +83,7 @@ const styles = StyleSheet.create({
   actionBlock: { gap: 10 },
   secondaryAction: { alignItems: "center", backgroundColor: colors.white, borderColor: colors.line, borderRadius: 13, borderWidth: 1, flexDirection: "row", gap: 8, justifyContent: "center", minHeight: 42 },
   secondaryText: { color: colors.ink, fontSize: 12, fontWeight: "700" },
+  pressed: { opacity: 0.76, transform: [{ scale: 0.98 }] },
   activityCard: { paddingBottom: 3, paddingTop: 3 },
   activityRow: { alignItems: "center", flexDirection: "row", gap: 11, minHeight: 74 },
   activityIcon: { alignItems: "center", backgroundColor: colors.mint, borderRadius: 12, height: 38, justifyContent: "center", width: 38 },
