@@ -180,4 +180,4 @@
 - [x] Completar el escaneo con cámara en dispositivos móviles y gestionar permisos.
 - [x] Añadir soporte para lectores físicos que actúan como teclado.
 - [x] Mejorar la retroalimentación, validación y guía de prueba del lector.
-- [ ] Validar y sincronizar la ampliación del lector con GitHub.
+- [x] Validar y sincronizar la ampliación del lector con GitHub.
