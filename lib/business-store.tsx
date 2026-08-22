@@ -1,7 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import type { BusinessConfiguration, BusinessFeatures, BusinessProfileDefinition, BusinessProfileId } from "@/shared/business-types";
+import type { BusinessConfiguration, BusinessCopy, BusinessFeatures, BusinessProfileDefinition, BusinessProfileId } from "@/shared/business-types";
+import { getProfileCopy } from "../shared/business-profile-content";
 import { canRemoveCategory, hasCategoryName, normalizeCategoryName } from "../shared/category-utils";
 
 const STORAGE_KEY = "@nexopos:business-profile:v1";
@@ -29,6 +30,7 @@ const defaultConfiguration: BusinessConfiguration = {
   suggestedCategories: defaultProfile.suggestedCategories,
   categories: defaultProfile.suggestedCategories,
   features: defaultProfile.features,
+  copy: getProfileCopy(defaultProfile.id),
 };
 
 type BusinessContextValue = {
@@ -38,6 +40,7 @@ type BusinessContextValue = {
   selectProfile: (profileId: BusinessProfileId) => void;
   updateBusinessName: (businessName: string) => void;
   updateFeatures: (changes: Partial<BusinessFeatures>) => void;
+  updateCopy: (changes: Partial<BusinessCopy>) => void;
   addCategory: (name: string) => boolean;
   renameCategory: (currentName: string, nextName: string) => boolean;
   removeCategory: (name: string) => boolean;
@@ -59,7 +62,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
         if (savedProfile && parsed.businessName) {
           const categories = Array.isArray(parsed.categories) && parsed.categories.length ? parsed.categories : parsed.suggestedCategories;
           const normalizedCategories = categories.map(normalizeCategoryName).filter((category): category is string => Boolean(category));
-          setConfiguration({ ...parsed, suggestedCategories: savedProfile.suggestedCategories, categories: [...new Set(normalizedCategories)], features: { ...savedProfile.features, ...parsed.features } });
+          setConfiguration({ ...parsed, suggestedCategories: savedProfile.suggestedCategories, categories: [...new Set(normalizedCategories)], features: { ...savedProfile.features, ...parsed.features }, copy: { ...getProfileCopy(savedProfile.id), ...parsed.copy } });
         }
       } catch {
         // The default restaurant profile remains available when local preferences cannot be restored.
@@ -78,7 +81,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const selectProfile = useCallback((profileId: BusinessProfileId) => {
     const profile = BUSINESS_PROFILES.find((entry) => entry.id === profileId);
     if (!profile) return;
-    setConfiguration((current) => ({ ...current, profileId, suggestedCategories: profile.suggestedCategories, categories: profile.suggestedCategories, features: profile.features }));
+    setConfiguration((current) => ({ ...current, profileId, suggestedCategories: profile.suggestedCategories, categories: profile.suggestedCategories, features: profile.features, copy: getProfileCopy(profile.id) }));
   }, []);
 
   const updateBusinessName = useCallback((businessName: string) => {
@@ -88,6 +91,10 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
 
   const updateFeatures = useCallback((changes: Partial<BusinessFeatures>) => {
     setConfiguration((current) => ({ ...current, features: { ...current.features, ...changes } }));
+  }, []);
+
+  const updateCopy = useCallback((changes: Partial<BusinessCopy>) => {
+    setConfiguration((current) => ({ ...current, copy: { ...current.copy, ...changes } }));
   }, []);
 
   const addCategory = useCallback((name: string) => {
@@ -125,7 +132,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const profile = useMemo(() => BUSINESS_PROFILES.find((entry) => entry.id === configuration.profileId) ?? defaultProfile, [configuration.profileId]);
-  const value = useMemo(() => ({ configuration, profile, hydrated, selectProfile, updateBusinessName, updateFeatures, addCategory, renameCategory, removeCategory }), [configuration, profile, hydrated, selectProfile, updateBusinessName, updateFeatures, addCategory, renameCategory, removeCategory]);
+  const value = useMemo(() => ({ configuration, profile, hydrated, selectProfile, updateBusinessName, updateFeatures, updateCopy, addCategory, renameCategory, removeCategory }), [configuration, profile, hydrated, selectProfile, updateBusinessName, updateFeatures, updateCopy, addCategory, renameCategory, removeCategory]);
   return <BusinessContext.Provider value={value}>{children}</BusinessContext.Provider>;
 }
 

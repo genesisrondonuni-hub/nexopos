@@ -11,6 +11,7 @@ export type ImportedInventoryProduct = {
   stock: number;
   minStock: number;
   showInCatalog: boolean;
+  type?: Product["type"];
 };
 
 export type ImportIssue = { row: number; message: string; severity: "warning" | "error" };
@@ -40,7 +41,7 @@ export function applyInventoryImport(current: Product[], importedProducts: Impor
       changes.push({ productId: before.id, before, after });
       updated += 1;
     } else {
-      const after: Product = { ...item, id: `import-${timestamp}-${index}`, type: "FINAL" };
+      const after: Product = { ...item, id: `import-${timestamp}-${index}`, type: item.type ?? "FINAL" };
       next.push(after);
       changes.push({ productId: after.id, after });
       created += 1;

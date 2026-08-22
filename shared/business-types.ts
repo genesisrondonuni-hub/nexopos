@@ -15,6 +15,19 @@ export type BusinessFeatures = {
   onlineSales: boolean;
 };
 
+export type BusinessCopy = {
+  catalogGreeting: string;
+  crmMessage: string;
+  agentWelcome: string;
+};
+
+export type BusinessStarterItem = {
+  name: string;
+  description: string;
+  category: string;
+  type: "FINAL" | "SERVICE";
+};
+
 export type BusinessProfileDefinition = {
   id: BusinessProfileId;
   label: string;
@@ -31,4 +44,5 @@ export type BusinessConfiguration = {
   suggestedCategories: string[];
   categories: string[];
   features: BusinessFeatures;
+  copy: BusinessCopy;
 };

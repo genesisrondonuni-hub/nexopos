@@ -98,3 +98,7 @@
 - [x] Adaptar POS, inventario, pedidos y catálogo a cada nuevo tipo de comercio.
 - [x] Configurar CRM y agente comercial con conversaciones y reglas por perfil.
 - [x] Validar los perfiles y flujos comerciales ampliados.
+- [x] Permitir personalizar textos comerciales y de CRM por perfil de negocio.
+- [x] Cargar catálogos y servicios iniciales específicos para cada nuevo comercio.
+- [x] Añadir una validación guiada del CRM contextual por perfil.
+- [x] Validar las configuraciones y flujos de personalización comercial.
