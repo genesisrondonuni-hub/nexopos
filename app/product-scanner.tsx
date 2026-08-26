@@ -1,7 +1,7 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Alert, Linking, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { ScreenContainer } from "@/components/screen-container";
@@ -18,7 +18,7 @@ export default function ProductScannerScreen() {
   const [cameraActive, setCameraActive] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [captureMode, setCaptureMode] = useState<CaptureMode>(Platform.OS === "web" || routeMode === "hardware" ? "HARDWARE" : "CAMERA");
-  const ensureCameraPermission = async () => {
+  const ensureCameraPermission = useCallback(async () => {
     if (Platform.OS === "web") { Alert.alert("Cámara no disponible", "En el navegador usa el lector físico o ingresa el código manualmente."); return false; }
     if (permission?.granted) return true;
     const response = await requestPermission();
@@ -26,7 +26,7 @@ export default function ProductScannerScreen() {
     const message = response.canAskAgain ? "Permite el acceso para leer códigos con la cámara." : "La cámara fue bloqueada. Abre los ajustes del teléfono y habilita Cámara para NexoPOS.";
     Alert.alert("Permiso de cámara requerido", message, response.canAskAgain ? [{ text: "Entendido" }] : [{ text: "Cancelar", style: "cancel" }, { text: "Abrir ajustes", onPress: () => void Linking.openSettings() }]);
     return false;
-  };
+  }, [permission?.granted, requestPermission]);
   const finishScan = (value: string) => {
     const parsed = parseBarcodeInput(value);
     if (!parsed.normalized) return;
@@ -35,16 +35,16 @@ export default function ProductScannerScreen() {
     haptic.success();
     router.replace({ pathname: "/(tabs)/pos", params: { scannedCode: parsed.normalized, scanToken: String(Date.now()) } } as never);
   };
-  const activateCamera = async (silent = false) => {
+  const activateCamera = useCallback(async (silent = false) => {
     if (!await ensureCameraPermission()) return;
     if (!silent) haptic.light();
     setCameraActive(true);
-  };
+  }, [ensureCameraPermission]);
   useEffect(() => {
     if (captureMode !== "CAMERA" || Platform.OS === "web") return;
     const timer = setTimeout(() => { void activateCamera(true); }, 150);
     return () => { clearTimeout(timer); setCameraActive(false); };
-  }, [captureMode]);
+  }, [activateCamera, captureMode]);
   const setMode = (next: CaptureMode) => { haptic.light(); setCameraActive(false); setCaptureMode(next); };
   const isHardware = captureMode === "HARDWARE";
   const cameraView = captureMode === "CAMERA" && cameraActive && permission?.granted ? <View style={styles.cameraWrap}><CameraView style={styles.camera} facing="back" barcodeScannerSettings={{ barcodeTypes }} onBarcodeScanned={({ data }) => finishScan(data)} onMountError={() => { setCameraActive(false); Alert.alert("Cámara no disponible", "No fue posible iniciar la cámara. Revisa el permiso o usa un lector físico."); }} /><View style={styles.cameraHint}><Text style={styles.cameraHintText}>Centra el código dentro del recuadro</Text><Pressable onPress={() => setCameraActive(false)} style={({ pressed }) => [styles.stopCamera, pressed && styles.pressed]}><MaterialIcons name="close" size={16} color="#17211F" /><Text style={styles.stopCameraText}>Cerrar</Text></Pressable></View></View> : null;

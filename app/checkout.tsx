@@ -49,7 +49,7 @@ export default function CheckoutScreen() {
   const tip = Math.round(taxable * tipRate / 100);
   const total = taxable + tax + tip;
   const formatMoney = (value: number) => { const dual = formatDualCurrency(value, configuration.fiscal); return dual.usd ? `${dual.ves} · ${dual.usd}` : dual.ves; };
-  const paymentBase: Array<{ id: string; method: PaymentSplit["method"]; amount: number }> = paymentMode === "split" ? [{ id: "cash", method: "Efectivo", amount: Math.ceil(total / 2) }, { id: "card", method: "Tarjeta", amount: Math.floor(total / 2) }] : [{ id: paymentMode, method: paymentMode === "cash" ? "Efectivo" : "Tarjeta", amount: total }];
+  const paymentBase: { id: string; method: PaymentSplit["method"]; amount: number }[] = paymentMode === "split" ? [{ id: "cash", method: "Efectivo", amount: Math.ceil(total / 2) }, { id: "card", method: "Tarjeta", amount: Math.floor(total / 2) }] : [{ id: paymentMode, method: paymentMode === "cash" ? "Efectivo" : "Tarjeta", amount: total }];
   const payments = paymentBase.map((payment) => createReceivedPayment(payment.id, payment.method, payment.amount, receivedCurrencies[payment.id] ?? "VES", configuration.fiscal.usdVesRate));
   const cashChanges = payments.filter((payment) => payment.method === "Efectivo").map((payment) => {
     const currency = payment.receivedCurrency ?? "VES";

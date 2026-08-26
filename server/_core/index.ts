@@ -32,22 +32,30 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // Enable CORS for all routes - reflect the request origin to support credentials
+  const configuredOrigins = (process.env.CORS_ORIGINS ?? "")
+    .split(",")
+    .map((origin) => origin.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+  const developmentOrigins = ["http://localhost:8081", "http://127.0.0.1:8081"];
+  const allowedOrigins = new Set(
+    process.env.NODE_ENV === "production" ? configuredOrigins : [...developmentOrigins, ...configuredOrigins],
+  );
+
   app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    if (origin) {
+    const origin = typeof req.headers.origin === "string" ? req.headers.origin.replace(/\/$/, "") : "";
+    if (origin && allowedOrigins.has(origin)) {
       res.header("Access-Control-Allow-Origin", origin);
+      res.header("Vary", "Origin");
+      res.header("Access-Control-Allow-Credentials", "true");
     }
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    res.header(
-      "Access-Control-Allow-Headers",
-      "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-    );
-    res.header("Access-Control-Allow-Credentials", "true");
-
-    // Handle preflight requests
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
     if (req.method === "OPTIONS") {
-      res.sendStatus(200);
+      if (origin && !allowedOrigins.has(origin)) {
+        res.sendStatus(403);
+        return;
+      }
+      res.sendStatus(204);
       return;
     }
     next();

@@ -2,7 +2,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router } from "expo-router";
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { Card, colors, formatMoney, MetricCard, SectionTitle, StatusPill } from "@/components/nexo-ui";
+import { Card, colors, formatMoney, MetricCard, SectionTitle } from "@/components/nexo-ui";
 import { ScreenContainer } from "@/components/screen-container";
 import { haptic } from "@/lib/haptics";
 import { useCrm } from "@/lib/crm-store";

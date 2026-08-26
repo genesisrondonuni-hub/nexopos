@@ -12,7 +12,7 @@ import type { ProductSalesMetric, SalesAnalyticsRange, SalesGroupMetric } from "
 import { buildSalesAnalytics } from "@/shared/sales-analytics";
 
 type ReportRow = { kind: "section"; id: string; title: string; subtitle?: string } | { kind: "product"; id: string; title: string; detail: string; value: string; tone: "green" | "gold" | "coral" | "ink"; icon: keyof typeof MaterialIcons.glyphMap } | { kind: "group"; id: string; title: string; detail: string; value: string; icon: keyof typeof MaterialIcons.glyphMap };
-const RANGE_OPTIONS: Array<{ id: SalesAnalyticsRange; label: string }> = [{ id: "ALL", label: "Todo" }, { id: "7D", label: "7 días" }, { id: "30D", label: "30 días" }, { id: "90D", label: "90 días" }];
+const RANGE_OPTIONS: { id: SalesAnalyticsRange; label: string }[] = [{ id: "ALL", label: "Todo" }, { id: "7D", label: "7 días" }, { id: "30D", label: "30 días" }, { id: "90D", label: "90 días" }];
 
 function productRow(metric: ProductSalesMetric, type: "TOP" | "LOW" | "LOSS" | "EXIT"): Extract<ReportRow, { kind: "product" }> {
   if (type === "TOP") return { kind: "product", id: `top-${metric.productId}`, title: metric.name, detail: `${metric.unitsSold} unidades · ${metric.collection}`, value: formatMoney(metric.revenue), tone: "green", icon: "trending-up" };
