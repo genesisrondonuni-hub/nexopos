@@ -34,7 +34,7 @@ async function startServer() {
 
   const configuredOrigins = (process.env.CORS_ORIGINS ?? "")
     .split(",")
-    .map((origin) => origin.trim().replace(/\/$/, ""))
+    .map((origin: string) => origin.trim().replace(/\/$/, ""))
     .filter(Boolean);
   const developmentOrigins = ["http://localhost:8081", "http://127.0.0.1:8081"];
   const allowedOrigins = new Set(
